@@ -4,9 +4,8 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-
-// Original Snippet Code: John Regher
-// Modified: Paarth Lakhani
+#include <fcntl.h>
+#include <string.h>
 
 /*********************************************************************
  *
@@ -56,10 +55,55 @@
  * the lower-order byte positions of the return value
  *
  * EXAMPLE: byte_sort (0x0403deadbeef0201) returns 0xefdebead04030201
+ * In the above example: each digit is 4 bits and so two digits make up one byte.
+ * 
+ * We need to take one byte at a time and store them in a data structure and then sort them
  *
  *********************************************************************/
 
-unsigned long byte_sort(unsigned long arg) { return 0; }
+unsigned long byte_sort(unsigned long arg) 
+{
+  
+  // "And" it with 0xFF and then right-shift by 1 byte; 8 bits
+  // put it in the array and then sort
+  int i;
+  unsigned char array_pointer[8];
+
+  for(i = 0 ; i < 7; i++)
+  {
+    array_pointer[i] = arg & 0xFF;
+    arg = arg >> 8;
+  }
+
+  array_pointer[i] = arg & 0xFF;
+
+  // Sorting the array now.
+  i = 0;
+  int j = 0;
+  for(i = 0 ; i < 8 ; i++)
+  {
+    for(j = 0 ; j < 8 - 1 - i; j++)
+    {
+      if(array_pointer[j+1] < array_pointer[j])
+      {
+        int temp = array_pointer[j];
+        array_pointer[j] = array_pointer[j+1];
+        array_pointer[j+1] = temp;
+      }
+    }
+  }
+
+  arg = 0;
+
+  for(i = 7 ; i >= 1; i--)
+  {
+    arg = arg + array_pointer[i];
+    arg = arg << 8;
+  }
+  arg = arg + array_pointer[0];
+
+  return arg;
+}
 
 /*********************************************************************
  *
@@ -77,7 +121,46 @@ unsigned long byte_sort(unsigned long arg) { return 0; }
  *
  *********************************************************************/
 
-unsigned long nibble_sort(unsigned long arg) { return 0; }
+unsigned long nibble_sort(unsigned long arg) 
+{
+  int i;
+  unsigned char array_pointer[16];
+
+  for(i = 0 ; i < 15; i++)
+  {
+    array_pointer[i] = arg & 0xF;
+    arg = arg >> 4;
+  }
+
+  array_pointer[i] = arg & 0xF;
+
+  // Sorting the array now.
+  i = 0;
+  int j = 0;
+  for(i = 0 ; i < 16 ; i++)
+  {
+    for(j = 0 ; j < 16 - 1 - i; j++)
+    {
+      if(array_pointer[j+1] < array_pointer[j])
+      {
+        int temp = array_pointer[j];
+        array_pointer[j] = array_pointer[j+1];
+        array_pointer[j+1] = temp;
+      }
+    }
+  }
+
+  arg = 0;
+
+  for(i = 15 ; i >= 1; i--)
+  {
+    arg = arg + array_pointer[i];
+    arg = arg << 4;
+  }
+  arg = arg + array_pointer[0];
+
+  return arg;
+}
 
 /*********************************************************************
  *
@@ -106,8 +189,64 @@ struct elt {
   struct elt *link;
 };
 
-struct elt *name_list(void) {
-  return NULL;
+struct elt *name_list(void) 
+{
+  const char* name = "paarth"; // 6
+  int i = 1;
+  struct elt *head_letter = malloc(sizeof(struct elt));
+  if(head_letter == NULL)
+    {
+      return NULL;
+    }
+  else
+    {
+      head_letter -> val = *name;
+      head_letter -> link = NULL;
+    }
+  struct elt *current = head_letter;
+  name++;
+
+  while(i < 6)
+  {
+    struct elt *letter = malloc(sizeof(struct elt));
+    
+    if(i == 4)
+      letter = NULL;
+    
+    if(letter!=NULL)
+      {
+        letter -> val = *name;
+	      letter -> link = NULL;
+        current -> link = letter;
+	      current = letter;
+	      name++;
+	      i++;
+      }
+    else
+      {
+	while(head_letter!=NULL)
+	  {
+	    struct elt *free_now = head_letter;
+	    head_letter = head_letter -> link;
+	    free(free_now);
+	  }
+	return NULL;
+      }
+  }
+
+  return head_letter;
+}
+
+
+// You have to delete this
+void print_list(struct elt *current)
+{
+  int i;
+  for( i = 0; i < 6; i++)
+    {
+      printf("Char is: %c\n", current->val);
+      current = current->link;
+    }
 }
 
 /*********************************************************************
@@ -131,9 +270,174 @@ struct elt *name_list(void) {
  *
  *********************************************************************/
 
+static void print_array(char* converted_number, int capacity)
+{
+  int i;
+  for( i = capacity - 1 ; i >= 0 ; i--)
+    {  
+      putc(converted_number[i], stdout);
+    }
+    putc('\n', stdout);
+}
+
+
 enum format_t { OCT = 66, BIN, HEX };
 
-void convert(enum format_t mode, unsigned long value) {}
+/// You have to convert it manually
+void convert(enum format_t mode, unsigned long value)
+{
+  if(mode== OCT)
+  { 
+    char converted_number[11];
+
+    int i = 0;
+    while(i < 11)
+    {
+      int digit = value & 0x7;
+      value = value >> 3;
+
+      if(digit == 0)
+      {
+        converted_number[i]  = '0';
+      }
+      else if(digit == 1)
+      {
+         converted_number[i] = '1';
+      }
+      else if(digit == 2)
+      {
+         converted_number[i] = '2';
+      }
+      else if(digit == 3)
+      {
+         converted_number[i] = '3';
+      }
+      else if(digit == 4)
+      {
+         converted_number[i] = '4';
+      }
+      else if(digit == 5)
+      {
+         converted_number[i] = '5';
+      }
+      else if(digit == 6)
+      {
+         converted_number[i] = '6';
+      }
+      else if(digit == 7)
+      {
+         converted_number[i] = '7';
+      }
+
+      i++;
+    }
+
+    print_array(converted_number, 11);
+  }
+  else if(mode == BIN)
+    {
+            
+      char converted_number[32];
+
+      int i = 0;
+      while(i < 32)
+      {
+        int digit = value & 0x1;
+        value = value >> 1;
+
+        if(digit == 0)
+        {
+          converted_number[i]  = '0';
+        }
+        else if(digit == 1)
+        {
+          converted_number[i] = '1';
+        }
+        i++;
+      }
+      
+      print_array(converted_number, 32);
+    }
+  else if(mode == HEX)
+    {
+      char converted_number[8];
+      int i = 0;
+      while(i < 8)
+      {
+        int digit = value & 0x0F;
+        value = value >> 4;
+
+        if(digit == 0)
+        {
+          converted_number[i]  = '0';
+        }
+        else if(digit == 1)
+        {
+          converted_number[i] = '1';
+        }
+        else if(digit == 2)
+        {
+          converted_number[i] = '2';
+        }
+        else if(digit == 3)
+        {
+          converted_number[i] = '3';
+        }
+        else if(digit == 4)
+        {
+          converted_number[i] = '4';
+        }
+        else if(digit == 5)
+        {
+          converted_number[i] = '5';
+        }
+        else if(digit == 6)
+        {
+          converted_number[i] = '6';
+        }
+        else if(digit == 7)
+        {
+          converted_number[i] = '7';
+        }
+        else if(digit == 8)
+        {
+          converted_number[i] = '8';
+        }
+        else if(digit == 9)
+        {
+          converted_number[i] = '9';
+        }
+        else if(digit == 10)
+        {
+          converted_number[i] = 'A';
+        }
+        else if(digit == 11)
+        {
+          converted_number[i] = 'B';
+        }
+        else if(digit == 12)
+        {
+          converted_number[i] = 'C';
+        }
+        else if(digit == 13)
+        {
+          converted_number[i] = 'D';
+        }
+        else if(digit == 14)
+        {
+          converted_number[i] = 'E';
+        }
+        else if(digit == 15)
+        {
+          converted_number[i] = 'F';
+        }
+        i++;
+      }
+      
+      print_array(converted_number, 8);
+    }
+}
+
 
 /*********************************************************************
  *
@@ -162,4 +466,49 @@ void convert(enum format_t mode, unsigned long value) {}
  *
  *********************************************************************/
 
-void draw_me(void) {}
+void draw_me(void)
+{
+  int file_des = syscall(SYS_open,"me.txt",O_RDWR | O_CREAT | O_APPEND | O_TRUNC, S_IWUSR | S_IRUSR | S_IXUSR);
+
+    if(file_des == -1)
+    {
+      syscall(SYS_close,file_des);
+      unlink("me.txt");
+      return;
+    }
+
+    const char* name = "                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        000000000000000000?????????????0000000000000000000\n\
+                        00000000000000000??????????????0000000000000000000\n\
+                        000000000000000 ??????????????? 000000000000000000\n\
+                        000000000000.+++++++++++++++++++++++.0000000000000\n\
+                        00000000000.000000000000000000000000.0000000000000\n\
+                        0000000000.00000000000000000000000000.000000000000\n\
+                        000000000.0000000000000000000000000000.00000000000\n\
+                        00000000.00000....000000000000....00000.0000000000\n\
+                        0000000.000000....000000000000....000000.000000000\n\
+                        000000.0000000000000000.00000000000000000.00000000\n\
+                        0000000.000000000000000.0000000000000000.000000000\n\
+                        00000000.00000000000000.000000000000000.0000000000\n\
+                        000000000.00000.0000000.000000.0000000.00000000000\n\
+                        0000000000.00000.00000000000.00000000.000000000000\n\
+                        00000000000.00000.00000000.000000000.0000000000000\n\
+                        000000000000.000000.00000.000000000.00000000000000\n\
+                        0000000000000.00000000000000000000.000000000000000\n\
+                        0000000000000:::::::::::::::::::::0000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n";
+
+    long result = syscall(SYS_write, file_des, name, strlen(name));
+    if(result == -1)
+    {
+      syscall(SYS_close,file_des);
+      unlink("me.txt");
+      return;
+    }
+
+    syscall(SYS_close,file_des);
+}
