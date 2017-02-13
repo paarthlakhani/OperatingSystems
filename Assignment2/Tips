@@ -1,0 +1,32 @@
+Define a worker function
+       void *foo(void *args)
+
+Initialize pthread_attr_t
+	pthread_attr_t attr;
+	pthread_attr_init(attr);
+
+Create a thread
+       pthread_t thread;
+       pthread_create(&thread, &attr, worker_function, arg)
+       attribute to be sent to the thread.
+
+gcc problem_1.c -o problem_1
+multithreaded program:
+gcc -pthread problem_1.c -o problem_1
+./problem_1.c 5 5
+
+multi-threaded program
+gcc -pthread demo.c -o demo
+
+Questions:
+0. first complete the program using mutexes. What do you think ?
+1. Do I need to declare everything as volatile.
+2. What is the attr variable used for. Should we keep it null ?
+3. Show the warnings in the C code.
+4. How to do the debugging ?
+print statements might work
+Other tools might also work --> Valgrant
+
+5. In this assignment, we have to create our own lock system and not use mutex lock and mutex unlocking ?
+6. Show the malloc implementation error checking handling
+7. How to make the thread run again after creating it ?
