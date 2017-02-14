@@ -13,11 +13,12 @@ volatile int* choosing;
 volatile int* frequency_threads;
 volatile pthread_t* threads;
 volatile int is_time = 1;
+volatile int num_threads;
 pthread_mutex_t mutex_lock;
 
 // Finds the maximum in the array and then increments by 1 to get the 
 // new index
-int new_index(volatile int* number,int num_threads) 
+int new_index(int num_threads) 
 {
   int max = 0;
   int i;
@@ -31,14 +32,23 @@ int new_index(volatile int* number,int num_threads)
   return (max + 1);
 }
 
-void lock()
+void lock(int thread_number)
 {
-  
+  choosing[thread_number] = 1;
+  number[thread_number] = new_index(num_threads);
+  choosing[thread_number] = 0;
+
+  int j;
+  for(j = 0; j < num_threads; j++)
+  {
+    while(choosing[j]);
+    while( (number[j] != 0)   && ( ( number[j] < number[thread_number] ) || (number[j] == number[thread_number] && j < thread_number )));
+  }
 }
 
-void unlock()
+void unlock(int thread_number)
 {
-  
+  number[thread_number] = 0;
 }
 
 // worker function
@@ -46,9 +56,8 @@ void thread_function(void *thread_number)
 {
   while(is_time)
   {
-    pthread_mutex_lock(&mutex_lock);
     int thread_num = (int)thread_number;
-    // printf("Thread number is : %d\n" , thread_num );
+    lock(thread_num);
     assert(in_cs==0);
     in_cs++;
     assert(in_cs==1);
@@ -57,23 +66,21 @@ void thread_function(void *thread_number)
     in_cs++;
     assert(in_cs==3);
     in_cs=0;
-    //*(frequency_threads + thread_num) = *(frequency_threads + thread_num) + 1;
-    //printf("The thread number is: %d\n", thread_num);
     frequency_threads[thread_num] = frequency_threads[thread_num] + 1;
-    pthread_mutex_unlock(&mutex_lock);
+    unlock(thread_num);
   }
 }
 
 int main(int argc, char**argv)
 {
-  if(argc < 3) // Sufficient threads are not provided
-    {
+  if(argc < 3) // Insufficient arguments
+  {
       printf("Insufficient arguments.\n");
       return -1;
-    }
-
+  }
+  
   // argument 1 = number of threads
-  int num_threads = atoi(argv[1]);
+  num_threads = atoi(argv[1]);
 
   // argument 2 = seconds to run the program
   int num_seconds = atoi(argv[2]);
@@ -143,22 +150,3 @@ int main(int argc, char**argv)
 
   return 0;
 }
-
-
-  /*
-  int  i;
-  int j = 20;
-  for( i = 0 ; i < num_threads; i++)
-    {
-      *(number + i) = rand() % j;
-      j = j + (rand() % 67);
-    }
-  printf("Hello Everyone\n");
-
-  for( i = 0 ; i < num_threads; i++)
-    {
-      printf("%d\n",*(number + i));
-    }
-
-  printf("The maximum is: %d",new_index(number, num_threads) );
-  */

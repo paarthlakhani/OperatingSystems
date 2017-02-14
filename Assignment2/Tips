@@ -11,11 +11,12 @@ Create a thread
        attribute to be sent to the thread.
 
 gcc problem_1.c -o problem_1
-multithreaded program:
+multithreaded program compilation:
 gcc -pthread problem_1.c -o problem_1
-./problem_1.c 5 5
+./problem_1.c 5 5 <-- This is going to fail for multicores. Run the single core version:
+taskset -c 1 ./problem_1 5 5
 
-multi-threaded program
+multi-threaded program 
 gcc -pthread demo.c -o demo
 
 Questions:
