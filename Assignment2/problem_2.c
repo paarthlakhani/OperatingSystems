@@ -1,4 +1,4 @@
-// Problem 1 
+// Problem 2
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
@@ -78,7 +78,7 @@ int main(int argc, char**argv)
       printf("Insufficient arguments.\n");
       return -1;
   }
-
+  
   // argument 1 = number of threads
   num_threads = atoi(argv[1]);
 
