@@ -16,6 +16,18 @@ gcc -pthread problem_1.c -o problem_1
 ./problem_1.c 5 5 <-- This is going to fail for multicores. Run the single core version:
 taskset -c 1 ./problem_1 5 5
 
+Problem 2:
+gcc -pthread problem_2.c -o problem_2
+taskset -c 1 ./problem_2 5 5
+
+Problem 3:
+gcc -pthread problem_3.c -o problem_3
+./problem_3.c 5 5
+
+Problem 4:
+gcc -pthread problem_4.c -o problem_4
+./problem_4.c 5 5
+
 multi-threaded program 
 gcc -pthread demo.c -o demo
 
@@ -31,3 +43,26 @@ Other tools might also work --> Valgrant
 5. In this assignment, we have to create our own lock system and not use mutex lock and mutex unlocking ?
 6. Show the malloc implementation error checking handling
 7. How to make the thread run again after creating it ?
+
+
+Questions to ask:
+1. sometimes not able to break the code for the first one for problem 3.
+Use less number of threads and more seconds
+
+2. problem 3 clarification
+3. part 4, do we have to take in the same arguments as for part 3 and 2.
+
+Questions to ask:
+
+Problem 3 checking:
+./problem_3 2 600
+./problem_3 5 600
+./problem_3 20 600
+
+Are the above checks sufficient ? Two mfence() used ?
+
+Problem 2 checking similar manner.
+
+Problem 4 --> similar arguments as part 3 ?
+number of threads to run and number of seconds to run.
+Show your solution

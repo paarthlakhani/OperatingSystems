@@ -1,4 +1,7 @@
-// Problem 1 
+// Problem 3
+/*
+  ./problem_3 2 35
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
@@ -15,8 +18,12 @@ volatile pthread_t* threads;
 volatile int is_time = 1;
 volatile int num_threads;
 
-// Finds the maximum in the array and then increments by 1 to get the 
-// new index
+// Instructor's Code
+void mfence (void) 
+{
+  asm volatile ("mfence" : : : "memory");
+}
+
 int new_index(int num_threads) 
 {
   int max = 0;
@@ -31,10 +38,16 @@ int new_index(int num_threads)
   return (max + 1);
 }
 
+/**
+  lock function requires mfence() before setting and unsetting a thread in the choosing array, and when
+  getting a token for a thread for that array. We need that because we don't want threads on other cores to access the choosing array, number array and the new_index function before the values in those data structures are finally set by other threads.
+**/
 void lock(int thread_number)
 {
   choosing[thread_number] = 1;
+  mfence();
   number[thread_number] = new_index(num_threads);
+  mfence();
   choosing[thread_number] = 0;
 
   int j;
@@ -45,6 +58,10 @@ void lock(int thread_number)
   }
 }
 
+/**
+  For the similar reason, we also need an mfence() when unsetting a thread. This is
+  an indication to other threads about the threads that are no longer waiting for the resources
+**/
 void unlock(int thread_number)
 {
   number[thread_number] = 0;
@@ -119,30 +136,30 @@ int main(int argc, char**argv)
 
   void *status;
 
-  // Creating threads
-  for( i = 0 ; i < num_threads; i++)
-  {
-    // getting an error
-    int return_value = pthread_create(threads + i,NULL,thread_function,(void *)i);
-    if(return_value != 0)
+    // Creating threads
+    for( i = 0 ; i < num_threads; i++)
     {
-      printf("Error in creating threads");
-      return -1;
+      // getting an error
+      int return_value = pthread_create(threads + i,NULL,thread_function,(void *)i);
+      if(return_value != 0)
+      {
+        printf("Error in creating threads");
+        return -1;
+      }
     }
-  }
 
-  sleep(num_seconds);
-  is_time = 0;
+    sleep(num_seconds);
+    is_time = 0;
 
-  for( i = 0 ; i < num_threads; i++)
-  {
-    pthread_join(*(threads + i), &status);
-  }
+    for( i = 0 ; i < num_threads; i++)
+    {
+      pthread_join(*(threads + i), &status);
+    }
 
-  for( i = 0 ; i < num_threads; i++)
-  {
-    printf("The frequency is: %d\n" , frequency_threads[i]);
-  }
+    for( i = 0 ; i < num_threads; i++)
+    {
+      printf("The frequency is: %d\n" , frequency_threads[i]);
+    }
 
   return 0;
 }

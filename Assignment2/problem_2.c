@@ -1,9 +1,29 @@
 // Problem 2
+/*
+Original Frequency: taskset -c 1 ./problem_2 15 60
+The frequency is: 149
+The frequency is: 149
+The frequency is: 150
+The frequency is: 150
+The frequency is: 150
+The frequency is: 151
+The frequency is: 32180
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+The frequency is: 151
+
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
 #include<assert.h>
 #include<unistd.h>
+#include<sched.h>
 
 volatile int in_cs;
 volatile int* number;
@@ -14,7 +34,6 @@ volatile int* frequency_threads;
 volatile pthread_t* threads;
 volatile int is_time = 1;
 volatile int num_threads;
-pthread_mutex_t mutex_lock;
 
 // Finds the maximum in the array and then increments by 1 to get the 
 // new index
@@ -41,8 +60,14 @@ void lock(int thread_number)
   int j;
   for(j = 0; j < num_threads; j++)
   {
-    while(choosing[j]);
-    while( (number[j] != 0)   && ( ( number[j] < number[thread_number] ) || (number[j] == number[thread_number] && j < thread_number )));
+    while(choosing[j])
+    {
+      sched_yield();
+    }
+    while( (number[j] != 0)   && ( ( number[j] < number[thread_number] ) || (number[j] == number[thread_number] && j < thread_number )))
+    {
+      sched_yield();
+    }
   }
 }
 
@@ -120,14 +145,11 @@ int main(int argc, char**argv)
 
   void *status;
 
-  // initializing mutex locks
- pthread_mutex_init(&mutex_lock, NULL);
-
   // Creating threads
   for( i = 0 ; i < num_threads; i++)
     {
       // getting an error
-      int return_value = pthread_create(threads + i,NULL,thread_function,(void *)i);
+      int return_value = pthread_create(threads + i ,NULL,thread_function,(void *)i);
       if(return_value != 0)
       {
         printf("Error in creating threads");
@@ -136,6 +158,7 @@ int main(int argc, char**argv)
     }
 
     sleep(num_seconds);
+    
     is_time = 0;
 
     for( i = 0 ; i < num_threads; i++)
