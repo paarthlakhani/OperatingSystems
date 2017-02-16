@@ -28,6 +28,10 @@ Problem 4:
 gcc -pthread problem_4.c -o problem_4
 ./problem_4.c 5 5
 
+Problem 5:
+gcc -pthread problem_5.c -o problem_5
+./problem_5.c 5 5
+
 multi-threaded program 
 gcc -pthread demo.c -o demo
 
@@ -61,8 +65,13 @@ Problem 3 checking:
 
 Are the above checks sufficient ? Two mfence() used ?
 
-Problem 2 checking similar manner.
-
+Problem 2 checking similar manner
 Problem 4 --> similar arguments as part 3 ?
-number of threads to run and number of seconds to run.
+number of threads to run and number of seconds to run
 Show your solution
+
+
+Problem 5 -> why do we need something like locks. Can we make things as volatile
+Sometimes I get a negative integer for the frequency. Is there anything I should be doing ?
+
+The machine code that's been given, does it return the most recent value or does it return the old value ?
