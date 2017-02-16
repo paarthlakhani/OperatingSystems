@@ -15,11 +15,15 @@ void spin_unlock (struct spin_lock_t *s);
 static inline int atomic_cmpxchg (volatile int *ptr, int old, int new);
 
 volatile int in_cs;
-volatile num_threads;
-volatile pthread_t* threads;
+//volatile num_threads;
+int num_threads;
+//volatile pthread_t* threads;
+pthread_t* threads;
 volatile long* frequency_threads;
-volatile is_time = 1;
-volatile struct spin_lock_t *lock;
+//volatile is_time = 1;
+int is_time = 1;
+//volatile struct spin_lock_t *lock;
+struct spin_lock_t *lock;
 
 /*
  * atomic_cmpxchg
@@ -114,7 +118,7 @@ int main(int argc, char**argv)
 
     for(i = 0; i < num_threads; i++)
     {
-        int return_value = pthread_create(threads + i, NULL, thread_function, (void *)i);
+        int return_value = pthread_create(threads + i, NULL, thread_function, (void *)(long)i);
         if(return_value != 0)
         {
             printf("Error in creating threads");
@@ -132,7 +136,7 @@ int main(int argc, char**argv)
 
     for( i = 0 ; i < num_threads; i++)
     {
-      printf("The frequency is: %d\n" , frequency_threads[i]);
+      printf("The frequency is: %ld\n" , frequency_threads[i]);
     }
 
     return 0;
