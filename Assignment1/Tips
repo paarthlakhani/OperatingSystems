@@ -1,0 +1,13 @@
+Initial Compilation:
+gcc -g -o assign1 assign1.c
+
+/usr/bin/gcc -O2 -fmessage-length=0 -pedantic-errors -std=c99 -Werror -Wall -Wextra -Wwrite-strings -Winit-self -Wcast-align -Wcast-qual -Wpointer-arith -Wstrict-aliasing -Wformat=2 -Wmissing-include-dirs -Wno-unused-parameter -Wshadow -Wuninitialized -Wold-style-definition -c assign1.c
+
+http://blog.rchapman.org/post/36801038863/linux-system-call-table-for-x86-64
+
+gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-11)
+
+Questions:
+1. Show your syscall function
+2. Sorting algorithm
+3. convert to
