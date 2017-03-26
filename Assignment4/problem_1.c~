@@ -1,0 +1,16 @@
+int main()
+{
+  printf("Hello Everyone!");
+}
+
+void play(void) 
+{
+  for (int i=0; i<10; i++) 
+    {
+      assert(cats >= 0 && cats <= n_cats);
+      assert(dogs >= 0 && dogs <= n_dogs);
+      assert(birds >= 0 && birds <= n_birds);
+      assert(cats == 0 || dogs == 0);
+      assert(cats == 0 || birds == 0);
+    }
+}
