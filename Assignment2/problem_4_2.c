@@ -136,7 +136,7 @@ int main(int argc, char**argv)
 
     for( i = 0 ; i < num_threads; i++)
     {
-      printf("The frequency is: %ld\n" , frequency_threads[i]);
+      printf("Thread %d entered critical section %ld times\n" ,i + 1, frequency_threads[i]);
     }
 
     return 0;

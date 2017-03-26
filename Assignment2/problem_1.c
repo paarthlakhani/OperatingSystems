@@ -10,9 +10,11 @@ volatile int* number;
 volatile int* choosing;
 
 // Number of times each thread enters the critical section
-volatile int* frequency_threads;
-volatile pthread_t* threads;
-volatile int is_time = 1;
+volatile long* frequency_threads;
+// volatile pthread_t* threads;
+pthread_t* threads;
+// volatile int is_time = 1;
+int is_time = 1;
 volatile int num_threads;
 
 // Finds the maximum in the array and then increments by 1 to get the 
@@ -51,11 +53,11 @@ void unlock(int thread_number)
 }
 
 // worker function
-void thread_function(void *thread_number)
+void* thread_function(void *thread_number)
 {
   while(is_time)
   {
-    int thread_num = (int)thread_number;
+    long thread_num = (long)thread_number;
     lock(thread_num);
     assert(in_cs==0);
     in_cs++;
@@ -68,6 +70,7 @@ void thread_function(void *thread_number)
     frequency_threads[thread_num] = frequency_threads[thread_num] + 1;
     unlock(thread_num);
   }
+  return 0;
 }
 
 int main(int argc, char**argv)
@@ -88,7 +91,7 @@ int main(int argc, char**argv)
   number = (int *)malloc(sizeof(int)*num_threads);
   choosing = (int *)malloc(sizeof(int)*num_threads);
   threads = (pthread_t *)malloc(sizeof(pthread_t)*num_threads);
-  frequency_threads = (int *)malloc(sizeof(int)*num_threads);
+  frequency_threads = (long *)malloc(sizeof(long)*num_threads);
 
   int i;
   for(i = 0 ; i < num_threads ; i++)
@@ -123,7 +126,7 @@ int main(int argc, char**argv)
   for( i = 0 ; i < num_threads; i++)
   {
     // getting an error
-    int return_value = pthread_create(threads + i,NULL,thread_function,(void *)i);
+    int return_value = pthread_create(threads + i,NULL,thread_function,(void *)(long)i);
     if(return_value != 0)
     {
       printf("Error in creating threads");
@@ -141,7 +144,7 @@ int main(int argc, char**argv)
 
   for( i = 0 ; i < num_threads; i++)
   {
-    printf("The frequency is: %d\n" , frequency_threads[i]);
+    printf("Thread %d has entered critical section %ld times\n" ,i + 1, frequency_threads[i]);
   }
 
   return 0;

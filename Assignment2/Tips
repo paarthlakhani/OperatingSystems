@@ -32,6 +32,12 @@ Problem 5:
 gcc -pthread problem_5.c -o problem_5
 ./problem_5.c 5 5
 
+Problem 6:
+gcc -pthread problem_6.c -o problem_6
+./problem_6.c 5 5
+
+gcc -O2 -Wall -Wextra -Werror -pthread problem_1.c -o p1
+
 multi-threaded program 
 gcc -pthread demo.c -o demo
 
@@ -70,8 +76,10 @@ Problem 4 --> similar arguments as part 3 ?
 number of threads to run and number of seconds to run
 Show your solution
 
-
+Questions:
 Problem 5 -> why do we need something like locks. Can we make things as volatile
 Sometimes I get a negative integer for the frequency. Is there anything I should be doing ?
 
 The machine code that's been given, does it return the most recent value or does it return the old value ?
+
+tar -czvf name-of-archive.tar.gz /path/to/directory-or-file

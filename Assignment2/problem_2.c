@@ -1,22 +1,6 @@
 // Problem 2
 /*
-Original Frequency: taskset -c 1 ./problem_2 15 60
-The frequency is: 149
-The frequency is: 149
-The frequency is: 150
-The frequency is: 150
-The frequency is: 150
-The frequency is: 151
-The frequency is: 32180
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-The frequency is: 151
-
+Original Frequency: taskset -c 1 ./problem_1 15 60
 */
 #include<stdio.h>
 #include<stdlib.h>
@@ -31,9 +15,12 @@ volatile int* choosing;
 
 // Number of times each thread enters the critical section
 volatile int* frequency_threads;
-volatile pthread_t* threads;
-volatile int is_time = 1;
-volatile int num_threads;
+//volatile pthread_t* threads;
+pthread_t* threads;
+//volatile int is_time = 1;
+int is_time = 1;
+int num_threads;
+//volatile int num_threads;
 
 // Finds the maximum in the array and then increments by 1 to get the 
 // new index
@@ -81,7 +68,7 @@ void thread_function(void *thread_number)
 {
   while(is_time)
   {
-    int thread_num = (int)thread_number;
+    long thread_num = (long)thread_number;
     lock(thread_num);
     assert(in_cs==0);
     in_cs++;
@@ -149,7 +136,7 @@ int main(int argc, char**argv)
   for( i = 0 ; i < num_threads; i++)
     {
       // getting an error
-      int return_value = pthread_create(threads + i ,NULL,thread_function,(void *)i);
+      int return_value = pthread_create(threads + i ,NULL,thread_function,(void *)(long)i);
       if(return_value != 0)
       {
         printf("Error in creating threads");
@@ -168,7 +155,7 @@ int main(int argc, char**argv)
 
     for( i = 0 ; i < num_threads; i++)
     {
-      printf("The frequency is: %d\n" , frequency_threads[i]);
+      printf("Thread %d has entered critical section %d times\n" ,i + 1, frequency_threads[i]);
     }
 
   return 0;

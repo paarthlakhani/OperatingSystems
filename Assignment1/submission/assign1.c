@@ -1,0 +1,499 @@
+#define _GNU_SOURCE
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+
+/*********************************************************************
+ *
+ * These C functions use patterns and functionality often found in
+ * operating system code. Your job is to implement them. Of course you
+ * should write test cases. However, do not hand in your test cases
+ * and (especially) do not hand in a main() function since it will
+ * interfere with our tester.
+ *
+ * Additional requirements on all functions you write:
+ *
+ * - you may not refer to any global variables
+ *
+ * - you may not call any functions except those specifically
+ *   permitted in the specification
+ *
+ * - your code must compile successfully on CADE lab Linux
+ *   machines when using:
+ *
+ * /usr/bin/gcc -O2 -fmessage-length=0 -pedantic-errors -std=c99 -Werror -Wall
+ *-Wextra -Wwrite-strings -Winit-self -Wcast-align -Wcast-qual -Wpointer-arith
+ *-Wstrict-aliasing -Wformat=2 -Wmissing-include-dirs -Wno-unused-parameter
+ *-Wshadow -Wuninitialized -Wold-style-definition -c assign1.c
+ *
+ * NOTE 1: Some of the specifications below are specific to 64-bit
+ * machines, such as those found in the CADE lab.  If you choose to
+ * develop on 32-bit machines, some quantities (the size of an
+ * unsigned long and the size of a pointer) will change. Since we will
+ * be grading on 64-bit machines, you must make sure your code works
+ * there.
+ *
+ * NOTE 2: You should not need to include any additional header files,
+ * but you may do so if you feel that it helps.
+ *
+ * HANDIN: submit your finished file, still called assign.c, in Canvas
+ *
+ *
+ *********************************************************************/
+
+/*********************************************************************
+ *
+ * byte_sort()
+ *
+ * specification: byte_sort() treats its argument as a sequence of
+ * 8 bytes, and returns a new unsigned long integer containing the
+ * same bytes, sorted numerically, with the smaller-valued bytes in
+ * the lower-order byte positions of the return value
+ *
+ * EXAMPLE: byte_sort (0x0403deadbeef0201) returns 0xefdebead04030201
+ * In the above example: each digit is 4 bits and so two digits make up one byte.
+ * 
+ * We need to take one byte at a time and store them in a data structure and then sort them
+ *
+ *********************************************************************/
+
+unsigned long byte_sort(unsigned long arg) 
+{
+  
+  // "And" it with 0xFF and then right-shift by 1 byte; 8 bits
+  // put it in the array and then sort
+  int i;
+  unsigned char array_pointer[8];
+
+  for(i = 0 ; i < 7; i++)
+  {
+    array_pointer[i] = arg & 0xFF;
+    arg = arg >> 8;
+  }
+
+  array_pointer[i] = arg & 0xFF;
+
+  // Sorting the array now.
+  i = 0;
+  int j = 0;
+  for(i = 0 ; i < 8 ; i++)
+  {
+    for(j = 0 ; j < 8 - 1 - i; j++)
+    {
+      if(array_pointer[j+1] < array_pointer[j])
+      {
+        int temp = array_pointer[j];
+        array_pointer[j] = array_pointer[j+1];
+        array_pointer[j+1] = temp;
+      }
+    }
+  }
+
+  arg = 0;
+
+  for(i = 7 ; i >= 1; i--)
+  {
+    arg = arg + array_pointer[i];
+    arg = arg << 8;
+  }
+  arg = arg + array_pointer[0];
+
+  return arg;
+}
+
+/*********************************************************************
+ *
+ * nibble_sort()
+ *
+ * specification: nibble_sort() treats its argument as a sequence of
+ * 16 4-bit numbers, and returns an unsigned long integer containing
+ * the same nibbles, sorted numerically, with smaller-valued nibbles
+ * towards the "small end" of the unsigned long value that you return
+ *
+ * the fact that nibbles and hex digits correspond should make it easy to
+ * verify that your code is working correctly
+ *
+ * EXAMPLE: nibble_sort (0x0403deadbeef0201) returns 0xfeeeddba43210000
+ *
+ *********************************************************************/
+
+unsigned long nibble_sort(unsigned long arg) 
+{
+  int i;
+  unsigned char array_pointer[16];
+
+  for(i = 0 ; i < 15; i++)
+  {
+    array_pointer[i] = arg & 0xF;
+    arg = arg >> 4;
+  }
+
+  array_pointer[i] = arg & 0xF;
+
+  // Sorting the array now.
+  i = 0;
+  int j = 0;
+  for(i = 0 ; i < 16 ; i++)
+  {
+    for(j = 0 ; j < 16 - 1 - i; j++)
+    {
+      if(array_pointer[j+1] < array_pointer[j])
+      {
+        int temp = array_pointer[j];
+        array_pointer[j] = array_pointer[j+1];
+        array_pointer[j+1] = temp;
+      }
+    }
+  }
+
+  arg = 0;
+
+  for(i = 15 ; i >= 1; i--)
+  {
+    arg = arg + array_pointer[i];
+    arg = arg << 4;
+  }
+  arg = arg + array_pointer[0];
+
+  return arg;
+}
+
+/*********************************************************************
+ *
+ * name_list()
+ *
+ * specification: allocate and return a pointer to a linked list of
+ * struct elts
+ *
+ * - the first element in the list should contain in its "val" field the first
+ *   letter of your first name; the second element the second letter, etc.;
+ *
+ * - the last element of the linked list should contain in its "val" field
+ *   the last letter of your first name and its "link" field should be a null
+ *   pointer
+ *
+ * - each element must be dynamically allocated using a malloc() call
+ *
+ * - if any call to malloc() fails, your function must return NULL and must also
+ *   free any heap memory that has been allocated so far; that is, it must not
+ *   leak memory when allocation fails
+ *
+ *********************************************************************/
+
+struct elt {
+  char val;
+  struct elt *link;
+};
+
+struct elt *name_list(void) 
+{
+  const char* name = "paarth"; // 6
+  int i = 1;
+  struct elt *head_letter = malloc(sizeof(struct elt));
+  if(head_letter == NULL)
+    {
+      return NULL;
+    }
+  else
+    {
+      head_letter -> val = *name;
+      head_letter -> link = NULL;
+    }
+  struct elt *current = head_letter;
+  name++;
+
+  while(i < 6)
+  {
+    struct elt *letter = malloc(sizeof(struct elt));
+
+    if(letter!=NULL)
+      {
+        letter -> val = *name;
+	      letter -> link = NULL;
+        current -> link = letter;
+	      current = letter;
+	      name++;
+	      i++;
+      }
+    else
+      {
+	while(head_letter!=NULL)
+	  {
+	    struct elt *free_now = head_letter;
+	    head_letter = head_letter -> link;
+	    free(free_now);
+	  }
+	return NULL;
+      }
+  }
+
+  return head_letter;
+}
+
+/*********************************************************************
+ *
+ * convert()
+ *
+ * specification: depending on the value of "mode", print "value" as
+ * octal, binary, or hexidecimal to stdout, followed by a newline
+ * character
+ *
+ * extra requirement 1: output must be via putc()
+ *
+ * extra requirement 2: print nothing if "mode" is not one of OCT,
+ * BIN, or HEX
+ *
+ * extra requirement 3: all leading/trailing zeros should be printed
+ *
+ * EXAMPLE: convert (HEX, 0xdeadbeef) should print
+ * "00000000deadbeef\n" (including the newline character but not
+ * including the quotes)
+ *
+ *********************************************************************/
+
+static void print_array(char* converted_number, int capacity)
+{
+  int i;
+  for( i = capacity - 1 ; i >= 0 ; i--)
+    {  
+      putc(converted_number[i], stdout);
+    }
+    putc('\n', stdout);
+}
+
+
+enum format_t { OCT = 66, BIN, HEX };
+
+/// You have to convert it manually
+void convert(enum format_t mode, unsigned long value)
+{
+  if(mode== OCT)
+  { 
+    char converted_number[11];
+
+    int i = 0;
+    while(i < 11)
+    {
+      int digit = value & 0x7;
+      value = value >> 3;
+
+      if(digit == 0)
+      {
+        converted_number[i]  = '0';
+      }
+      else if(digit == 1)
+      {
+         converted_number[i] = '1';
+      }
+      else if(digit == 2)
+      {
+         converted_number[i] = '2';
+      }
+      else if(digit == 3)
+      {
+         converted_number[i] = '3';
+      }
+      else if(digit == 4)
+      {
+         converted_number[i] = '4';
+      }
+      else if(digit == 5)
+      {
+         converted_number[i] = '5';
+      }
+      else if(digit == 6)
+      {
+         converted_number[i] = '6';
+      }
+      else if(digit == 7)
+      {
+         converted_number[i] = '7';
+      }
+
+      i++;
+    }
+
+    print_array(converted_number, 11);
+  }
+  else if(mode == BIN)
+    {
+            
+      char converted_number[32];
+
+      int i = 0;
+      while(i < 32)
+      {
+        int digit = value & 0x1;
+        value = value >> 1;
+
+        if(digit == 0)
+        {
+          converted_number[i]  = '0';
+        }
+        else if(digit == 1)
+        {
+          converted_number[i] = '1';
+        }
+        i++;
+      }
+      
+      print_array(converted_number, 32);
+    }
+  else if(mode == HEX)
+    {
+      char converted_number[8];
+      int i = 0;
+      while(i < 8)
+      {
+        int digit = value & 0x0F;
+        value = value >> 4;
+
+        if(digit == 0)
+        {
+          converted_number[i]  = '0';
+        }
+        else if(digit == 1)
+        {
+          converted_number[i] = '1';
+        }
+        else if(digit == 2)
+        {
+          converted_number[i] = '2';
+        }
+        else if(digit == 3)
+        {
+          converted_number[i] = '3';
+        }
+        else if(digit == 4)
+        {
+          converted_number[i] = '4';
+        }
+        else if(digit == 5)
+        {
+          converted_number[i] = '5';
+        }
+        else if(digit == 6)
+        {
+          converted_number[i] = '6';
+        }
+        else if(digit == 7)
+        {
+          converted_number[i] = '7';
+        }
+        else if(digit == 8)
+        {
+          converted_number[i] = '8';
+        }
+        else if(digit == 9)
+        {
+          converted_number[i] = '9';
+        }
+        else if(digit == 10)
+        {
+          converted_number[i] = 'A';
+        }
+        else if(digit == 11)
+        {
+          converted_number[i] = 'B';
+        }
+        else if(digit == 12)
+        {
+          converted_number[i] = 'C';
+        }
+        else if(digit == 13)
+        {
+          converted_number[i] = 'D';
+        }
+        else if(digit == 14)
+        {
+          converted_number[i] = 'E';
+        }
+        else if(digit == 15)
+        {
+          converted_number[i] = 'F';
+        }
+        i++;
+      }
+      
+      print_array(converted_number, 8);
+    }
+}
+
+
+/*********************************************************************
+ *
+ * draw_me()
+ *
+ * this function creates a file called me.txt which contains an ASCII-art
+ * picture of you (it does not need to be very big). the file must (pointlessly,
+ * since it does not contain executable content) be marked as executable.
+ *
+ * extra requirement 1: you may only call the function syscall() (type "man
+ * syscall" to see what this does)
+ *
+ * extra requirement 2: you must ensure that every system call succeeds; if any
+ * fails, you must clean up the system state (closing any open files, deleting
+ * any files created in the file system, etc.) such that no trash is left
+ * sitting around
+ *
+ * you might be wondering how to learn what system calls to use and what
+ * arguments they expect. one way is to look at a web page like this one:
+ * http://blog.rchapman.org/post/36801038863/linux-system-call-table-for-x86-64
+ * another thing you can do is write some C code that uses standard I/O
+ * functions to draw the picture and mark it as executable, compile the program
+ * statically (e.g. "gcc foo.c -O -static -o foo"), and then disassemble it
+ * ("objdump -d foo") and look at how the system calls are invoked, then do
+ * the same thing manually using syscall()
+ *
+ *********************************************************************/
+
+void draw_me(void)
+{
+  int file_des = syscall(SYS_open,"me.txt",O_RDWR | O_CREAT | O_APPEND | O_TRUNC, S_IWUSR | S_IRUSR | S_IXUSR);
+
+    if(file_des == -1)
+    {
+      syscall(SYS_close,file_des);
+      unlink("me.txt");
+      return;
+    }
+
+    const char* name = "                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        000000000000000000?????????????0000000000000000000\n\
+                        00000000000000000??????????????0000000000000000000\n\
+                        000000000000000 ??????????????? 000000000000000000\n\
+                        000000000000.+++++++++++++++++++++++.0000000000000\n\
+                        00000000000.000000000000000000000000.0000000000000\n\
+                        0000000000.00000000000000000000000000.000000000000\n\
+                        000000000.0000000000000000000000000000.00000000000\n\
+                        00000000.00000....000000000000....00000.0000000000\n\
+                        0000000.000000....000000000000....000000.000000000\n\
+                        000000.0000000000000000.00000000000000000.00000000\n\
+                        0000000.000000000000000.0000000000000000.000000000\n\
+                        00000000.00000000000000.000000000000000.0000000000\n\
+                        000000000.00000.0000000.000000.0000000.00000000000\n\
+                        0000000000.00000.00000000000.00000000.000000000000\n\
+                        00000000000.00000.00000000.000000000.0000000000000\n\
+                        000000000000.000000.00000.000000000.00000000000000\n\
+                        0000000000000.00000000000000000000.000000000000000\n\
+                        0000000000000:::::::::::::::::::::0000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n\
+                        00000000000000000000000000000000000000000000000000\n";
+
+    long result = syscall(SYS_write, file_des, name, strlen(name));
+    if(result == -1)
+    {
+      syscall(SYS_close,file_des);
+      unlink("me.txt");
+      return;
+    }
+
+    syscall(SYS_close,file_des);
+}

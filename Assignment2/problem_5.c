@@ -11,17 +11,15 @@ struct spin_lock_t
     volatile int counter; // the next thread number
 };
 
-void spin_lock (struct spin_lock_t *s, int thread_number);
+void spin_lock (struct spin_lock_t *s);
 void spin_unlock (struct spin_lock_t *s);
 static inline int atomic_xadd(volatile int *ptr);
 
 volatile int in_cs;
-volatile num_threads;
-//volatile pthread_t *threads;
+int num_threads;
 pthread_t *threads;
 volatile long* frequency_threads;
-//volatile long* thread_num; // Thread ticket numbers
-volatile is_time = 1;
+int is_time = 1;
 struct spin_lock_t *lock;
 
 /*
@@ -42,9 +40,9 @@ static inline int atomic_xadd(volatile int *ptr) {
   return val;
 }
 
-void spin_lock (struct spin_lock_t *s, int thread_number)
+void spin_lock (struct spin_lock_t *s)
 {
-    volatile int me = atomic_xadd(&(s->counter));
+    int me = atomic_xadd(&(s->counter));
     while(me != s->turn);
     //thread_num[thread_number] = atomic_xadd(&(s->counter));
     
@@ -64,7 +62,7 @@ void thread_function(void *thread_number)
     while(is_time)
     {
         long thread_num = (long)thread_number;
-        spin_lock(lock, thread_num);
+        spin_lock(lock);
         assert(in_cs==0);
         in_cs++;
         assert(in_cs==1);
@@ -152,7 +150,7 @@ int main(int argc, char**argv)
 
     for( i = 0 ; i < num_threads; i++)
     {
-      printf("The frequency is: %d\n" , frequency_threads[i]);
+      printf("Thread %d has entered critical section %ld times\n" ,i + 1, frequency_threads[i]);
     }
 
     return 0;
