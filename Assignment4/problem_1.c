@@ -40,7 +40,7 @@ int dog_freq = 0;
 int bird_freq = 0;
 
 // Seconds the main thread should sleep
-int num_seconds = 1;
+int num_seconds = 10;
 
 void* play(void);
 void* cat_enter(void *); // Changed this declaration
