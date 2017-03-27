@@ -177,6 +177,7 @@ void *cat_enter(void *t)
 void cat_exit(void)
 {
   cats--;
+  printf("Number of cats are: %d\n" , cats);
   pthread_cond_signal(&cats_cond);
   //pthread_cond_signal(&dogs_cond);
   //pthread_cond_signal(&birds_cond);
@@ -206,6 +207,7 @@ void* dog_enter(void* t)
 void dog_exit(void)
 {
   dogs--;
+  printf("Number of dogs are: %d\n" , dogs);
   pthread_cond_signal(&dogs_cond);
 }
 
@@ -234,6 +236,7 @@ void* bird_enter(void* t)
 void bird_exit(void)
 {
   birds--;
+  printf("Number of birds are: %d\n" , birds);
   pthread_cond_signal(&birds_cond);
 }
 
