@@ -4,13 +4,6 @@
 #include<assert.h>
 #include<unistd.h>
 
-/*
-Questions to ask:
-1. Your approach
-2. Your output
-3. cat_enter(), dog_enter(), bird_enter() function signature changed
-*/
-
 // command line arguments
 int n_cats = 0;
 int n_dogs = 0;
@@ -42,20 +35,137 @@ int bird_freq = 0;
 // Seconds the main thread should sleep
 int num_seconds = 10;
 
-void* play(void);
-void* cat_enter(void *); // Changed this declaration
+void play(void);
+void cat_enter(void); // Changed this declaration
 void cat_exit(void);
-void* dog_enter(void *);
+void dog_enter(void);
 void dog_exit(void);
-void* bird_enter(void *);
+void bird_enter(void);
 void bird_exit(void);
+void* cat_func(void *);
+void* dog_func(void *);
+void* bird_func(void *);
+
+void* cat_func(void *t)
+{
+
+  while(cats_running)
+    {
+      cat_enter();
+      cat_exit();
+    }
+  return 0;
+}
+
+void* dog_func(void *t)
+{
+  while(dogs_running)
+    {
+      dog_enter();
+      dog_exit();
+    }
+  return 0;
+}
+
+void* bird_func(void *t)
+{
+  while(birds_running)
+    {
+      bird_enter();
+      bird_exit();
+    }
+  return 0;
+}
+
+void cat_enter(void)
+{
+    pthread_mutex_lock(&moniter_lock);
+    while(dogs!=0 || birds!=0) 
+    {
+      pthread_cond_wait(&cats_cond,&moniter_lock);
+    }
+
+    cat_freq++;
+    cats++;
+    play();
+}
+
+void cat_exit(void)
+{
+  pthread_mutex_lock(&moniter_lock);
+  cats--; 
+  pthread_cond_broadcast(&dogs_cond);
+  pthread_cond_broadcast(&birds_cond);
+  pthread_mutex_unlock(&moniter_lock);
+}
+
+void dog_enter(void)
+{
+    pthread_mutex_lock(&moniter_lock);
+    //while(cats!=0 && birds!=0)
+    while(cats!=0)
+    { 
+      pthread_cond_wait(&dogs_cond, &moniter_lock);
+    }
+    dog_freq++;
+    dogs++;
+    play();
+}
+
+void dog_exit(void) 
+{
+  pthread_mutex_lock(&moniter_lock);
+  dogs--;
+ pthread_cond_broadcast(&cats_cond);
+  pthread_mutex_unlock(&moniter_lock);
+}
+
+
+void bird_enter(void)
+{
+    pthread_mutex_lock(&moniter_lock);
+    while(cats!=0)
+    {
+      pthread_cond_wait(&birds_cond, &moniter_lock);
+    }
+
+    bird_freq++;
+    birds++;
+    play();
+
+
+    //  pthread_mutex_unlock(&moniter_lock);
+}
+
+void bird_exit(void)
+{
+  pthread_mutex_lock(&moniter_lock);
+  birds--;
+  pthread_cond_broadcast(&cats_cond);
+  pthread_mutex_unlock(&moniter_lock);
+}
+
+void play(void) 
+{
+
+  pthread_mutex_unlock(&moniter_lock);
+
+  for (int i=0; i<100; i++) 
+  {
+        assert(cats >= 0 && cats <= n_cats);
+        assert(dogs >= 0 && dogs <= n_dogs);
+        assert(birds >= 0 && birds <= n_birds);
+        assert(cats == 0 || dogs == 0);
+        assert(cats == 0 || birds == 0);
+  }
+}
 
 int main(int argc, char *argv[])
 {
   if(argc !=  4)
     {
       fprintf(stderr,"Three Arguments not given");
-      exit(0);
+      exit(-1);
     }
 
   // We have to be able detect the errors when converting the string into an integer
@@ -76,7 +186,7 @@ int main(int argc, char *argv[])
       // initializing the mutex lock
       pthread_mutex_init(&moniter_lock, NULL);
 
-      // initializing the mutex lock
+      // initializing the condition variables
       pthread_cond_init(&cats_cond, NULL);
       pthread_cond_init(&dogs_cond, NULL);
       pthread_cond_init(&birds_cond,NULL);
@@ -87,7 +197,7 @@ int main(int argc, char *argv[])
       int i;
       for(i = 0; i < n_cats ; i++)
       {
-        int return_value = pthread_create(&cat_threads[i], NULL, cat_enter, NULL);
+        int return_value = pthread_create(&cat_threads[i], NULL, cat_func, NULL);
         if(return_value!=0)
         {
           fprintf(stderr,"Thread was not created properly");
@@ -98,7 +208,7 @@ int main(int argc, char *argv[])
       // creating the dog threads
       for(i = 0; i < n_dogs ; i++)
       {
-        int return_value = pthread_create(&dog_threads[i], NULL, dog_enter, NULL);
+        int return_value = pthread_create(&dog_threads[i], NULL, dog_func, NULL);
         if(return_value!=0)
         {
           fprintf(stderr,"Thread was not created properly");
@@ -110,7 +220,7 @@ int main(int argc, char *argv[])
       
       for(i = 0; i < n_birds ; i++)
       {
-        int return_value = pthread_create(&bird_threads[i], NULL, bird_enter, NULL);
+        int return_value = pthread_create(&bird_threads[i], NULL, bird_func, NULL);
         if(return_value!=0)
         {
           fprintf(stderr,"Thread was not created properly");
@@ -147,108 +257,6 @@ int main(int argc, char *argv[])
       pthread_cond_destroy(&dogs_cond);
       pthread_cond_destroy(&birds_cond);
       pthread_mutex_destroy(&moniter_lock);
-
       pthread_exit(NULL);
     }
-}
-
-void *cat_enter(void *t)
-{
-  while(cats_running)
-  {
-    pthread_mutex_lock(&moniter_lock);
-    //while(dogs!=0 && birds!=0) pthread_cond_wait(&cats_cond,&moniter_lock);
-    while(dogs!=0 && birds!=0) 
-    //while(dogs!=0) 
-    {
-      pthread_cond_wait(&dogs_cond,&moniter_lock);
-      pthread_cond_wait(&birds_cond,&moniter_lock);
-    }
-
-    cat_freq++;
-    cats++;
-    play();
-    cat_exit();
-    pthread_mutex_unlock(&moniter_lock);
-  }
-  return 0;
-}
-
-void cat_exit(void)
-{
-  cats--;
-  printf("Number of cats are: %d\n" , cats);
-  pthread_cond_signal(&cats_cond);
-  //pthread_cond_signal(&dogs_cond);
-  //pthread_cond_signal(&birds_cond);
-}
-
-
-void* dog_enter(void* t)
-{
-  while(dogs_running)
-  {
-    pthread_mutex_lock(&moniter_lock);
-    //while(cats!=0 && birds!=0)
-    while(cats!=0)
-    { 
-      pthread_cond_wait(&cats_cond, &moniter_lock);
-      //pthread_cond_wait(&birds_cond,&moniter_lock);
-    }
-    dog_freq++;
-    dogs++;
-    play();
-    dog_exit();
-    pthread_mutex_unlock(&moniter_lock);
-  }
-  return 0;
-}
-
-void dog_exit(void)
-{
-  dogs--;
-  printf("Number of dogs are: %d\n" , dogs);
-  pthread_cond_signal(&dogs_cond);
-}
-
-
-void* bird_enter(void* t)
-{
-  while(birds_running)
-  {
-    pthread_mutex_lock(&moniter_lock);
-    //while(dogs!=0 && cats!=0) 
-    while(cats!=0) 
-    {
-      pthread_cond_wait(&cats_cond, &moniter_lock);
-      // pthread_cond_wait(&dogs_cond,&moniter_lock);
-    }
-
-    bird_freq++;
-    birds++;
-    play();
-    bird_exit();
-    pthread_mutex_unlock(&moniter_lock);
-  }
-  return 0;
-}
-
-void bird_exit(void)
-{
-  birds--;
-  printf("Number of birds are: %d\n" , birds);
-  pthread_cond_signal(&birds_cond);
-}
-
-void* play(void) 
-{
-  for (int i=0; i<10; i++) 
-  {
-        assert(cats >= 0 && cats <= n_cats);
-        assert(dogs >= 0 && dogs <= n_dogs);
-        assert(birds >= 0 && birds <= n_birds);
-        assert(cats == 0 || dogs == 0);
-        assert(cats == 0 || birds == 0);
-  }
-  return 0;
 }
