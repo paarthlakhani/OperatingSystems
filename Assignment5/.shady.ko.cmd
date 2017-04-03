@@ -1,0 +1,1 @@
+cmd_/home/lakhani/Desktop/OS/Assignment5/shady.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/lakhani/Desktop/OS/Assignment5/shady.ko /home/lakhani/Desktop/OS/Assignment5/shady.o /home/lakhani/Desktop/OS/Assignment5/shady.mod.o
