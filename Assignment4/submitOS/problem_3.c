@@ -10,9 +10,8 @@
 // Moniter variables
 // mutex lock
 pthread_mutex_t moniter_lock;
-volatile int file_no; // file selected by a thread.
-volatile long num_files; // total number of files.
-struct file_checksum *files; // Should this be volatile.
+volatile int file_no; // file selected by a thread
+volatile int num_files; // total number of files
 int is_running = 1; // threads are being run here.
 
 // condition variables
@@ -20,10 +19,9 @@ pthread_cond_t main_condition;
 
 struct file_checksum
 {
-  char* path_file; // Represents the path to the file on local computer
   char* file_name;
   uint32_t checksum;
-  long file_size;
+  int file_size;
 };
 
 int comparator_func(const void *first_name, const void *second_name)
@@ -33,7 +31,7 @@ int comparator_func(const void *first_name, const void *second_name)
   return(  strcmp( first_file, second_file ) );
 }
 
-void print_files(int n)
+void print_files(struct file_checksum *files, int n)
 {
   int i;
   for(i = 0; i < n ; i++)
@@ -43,55 +41,16 @@ void print_files(int n)
   }
 }
 
-void calculate_checksum(int index)
-{
-  pthread_mutex_unlock(&moniter_lock); // At this point, another thread can select the file number
-  printf("the index is: %d  ",index);
-  struct file_checksum file = files[index];  
-  long size_file = file.file_size;
-  void *buffer = malloc(sizeof(char)*(size_file));
-
-  if(buffer != NULL)
-  {
-    FILE *fp;
-    printf("Hi I am inside the buffer if statement for index: %d\n", index);
-
-    if((fp = fopen(file.path_file, "rb")) != NULL)
-    {
-      printf("path is: %s\n",file.path_file);
-      fread(buffer, 1, size_file, fp);
-      uint32_t initialCheck = 0;
-      files[index].checksum = crc32(initialCheck, buffer, size_file);
-      printf("Checksum is: %08x", files[index].checksum );
-      fclose(fp);
-      free(buffer);
-    }
-    else
-    {
-      printf("ACCESS ERROR\n");
-    }
-  }
-  else
-  {
-    printf("Could not allocate space");
-  }
-}
-
-// Used by threads?
 void* runs_infinite(void *t)
 {
   while(is_running)
   {
     pthread_mutex_lock(&moniter_lock);
-    if(file_no < num_files)
-    {
-      file_no++;
-      calculate_checksum(file_no - 1);
-    }
-    else
-    {
+   //  calculate_checksum(file_no, files, );
+    file_no++; // no. of directories whose checksum has been calculated
+    if(file_no >= num_files) // file_no has been greater than total number of files
       is_running = 0;
-    }
+    pthread_mutex_unlock(&moniter_lock);
   }
   return 0;
 }
@@ -115,6 +74,7 @@ void initialization(DIR *dir, DIR *counting_dir,char *directory_name, int thread
   }while(directory_copy!=NULL);
 
   closedir(counting_dir);
+  struct file_checksum *files;
 
   files = (struct file_checksum *)(malloc( sizeof(struct file_checksum)*num_files ));
   size_t i = 0;
@@ -127,28 +87,14 @@ void initialization(DIR *dir, DIR *counting_dir,char *directory_name, int thread
     {
       if(directory->d_type!=DT_DIR)
       {
-          files[i].path_file = (char *)malloc(sizeof(char)*( strlen(directory->d_name) + strlen(directory_name) + 1 ));
-          files[i].file_name = (char *)malloc(strlen(directory->d_name)*sizeof(char));
-          strcpy(files[i].file_name,  directory->d_name); // Actual filename
-          strcpy(files[i].path_file, directory_name); // This and the next line calculates the actual path
-          strcat(files[i].path_file, directory->d_name);
+          files[i].file_name = directory->d_name;
           files[i].checksum = 0;
-
-          FILE *fp;
-          if((fp = fopen(files[i].path_file, "rb")) != NULL)
-          {
-            fseek(fp, 0, SEEK_END);
-            files[i].file_size = ftell(fp);
-          }
-          fclose(fp);
-
+          files[i].file_size = directory->d_reclen;
           i++;
       }
     }
   }while(directory!=NULL);
 
-
-  // Do multiple threads later
   // file_no -> current file_no
   int j;
   for(j = 0; j < threads; j++)
@@ -161,24 +107,43 @@ void initialization(DIR *dir, DIR *counting_dir,char *directory_name, int thread
     }
   }
 
-  /*
-  int index;
-  for(index = 0; index< num_files ; index++) // calculating the checksum for each file.
-  {
-    calculate_checksum(index);
-  }*/
-  void *status;
-  int thread_num;
-  // Wait for the threads to join
-  for( thread_num = 0 ; thread_num < threads; thread_num++)
-  {
-    pthread_join(main_threads[i], &status);
-  }
-
   qsort(files, num_files, sizeof(struct file_checksum),comparator_func );
-  print_files(num_files);
+  print_files(files,num_files);
   free(files);
   closedir(dir);
+}
+
+void calculate_checksum(int index, struct file_checksum *files, char *directory_name)
+{
+  struct file_checksum file = files[index];  
+  char *new_string = (char *)malloc(sizeof(char)*( strlen(file.file_name) + strlen(directory_name) ));
+  strcpy(new_string, directory_name);
+  strcat(new_string, file.file_name);
+  int size_file = file.file_size;
+  void *buffer = malloc(sizeof(char)*size_file);
+
+  if(buffer != NULL)
+  {
+    FILE *fp;
+    if((fp = fopen(new_string, "r")) != NULL)
+    {
+      fread(buffer, 1, size_file, fp);
+      uint32_t initialCheck = 0;
+      files[index].checksum = crc32(initialCheck, buffer, size_file);;
+      fclose(fp);
+      free(buffer);
+    }
+    else
+    {
+      printf("ACCESS ERROR\n");
+    }
+  }
+  else
+  {
+    printf("Could not allocate space");
+  }
+
+  free(new_string);
 }
 
 int main(int argc, char* argv[])
@@ -193,12 +158,6 @@ int main(int argc, char* argv[])
   int threads = atoi(argv[2]);
   DIR *dir = NULL;
   DIR *dir_copy = NULL;
-
-  char c = directory_name[strlen(directory_name)-1];
-  if(c!='/')
-  {
-     strcat(directory_name, "/");
-  } 
 
   if((dir = opendir(directory_name)) == NULL)
   {
@@ -219,7 +178,6 @@ int main(int argc, char* argv[])
   pthread_cond_init(&main_condition, NULL);
 
   file_no = 0;
-  num_files =0;
 
   printf("FileName          Checksum\n");  
   initialization(dir, dir_copy, directory_name, threads);

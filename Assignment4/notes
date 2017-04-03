@@ -1,0 +1,7 @@
+valgrind --tool=memcheck --leak-check=full ./problem_2 ./examples/
+
+valgrind --tool=memcheck ./problem_2.c ./examples/
+
+//printf("%08x\n", checksum);
+// printf("Size of the file read by fread: %zu\n" , size_file_read);
+// printf("Real size of file: %d" , size_file);

@@ -1,0 +1,15 @@
+Copy the files from my home directory into yours
+
+cp -r /home/derekj/lab2 {directory in your space}
+
+Compile fib.c to use with gdb
+
+Use gdb to determine how many times fib is called with n = 3 when the program is given 7
+./a.out 7
+
+For practice, quickly rewrite fib iteratively
+
+Part 2:
+Inside h/ rewrite h.c using the disassembled h.s
+(Important parts start at .L2)
+Then, fix the bug in h.c

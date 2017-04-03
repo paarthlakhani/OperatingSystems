@@ -1,0 +1,15 @@
+Operating Systems Notes:
+
+Program should compile using the command:
+/usr/bin/gcc -pthread -O2 -fmessage-length=0 -pedantic-errors -std=gnu99 -Werror -Wall -Wextra -Wwrite-strings -Winit-self -Wcast-align -Wcast-qual -Wpointer-arith -Wstrict-aliasing -Wformat=2 -Wmissing-include-dirs -Wno-unused-parameter -Wshadow -Wuninitialized -Wold-style-definition problem_n.c -o problem_n
+
+Problem 1:
+Implement a monitor with six methods:
+cat_enter(), cat_exit(), dog_enter(), dog_exit(), bird_enter(), bird_exit()
+The monitor should have a condition variable for each kind of animal and (of course) a single mutex.
+
+Your problem 1 executable should take three command line arguments: the number of cats, dogs, and birds.
+
+Monitors lecture:
+Pdf lecture: Lecture No.11 Slide: 19
+Video Lecture: Lecture 11 - 56:00
