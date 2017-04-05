@@ -1,0 +1,39 @@
+1. You have to use the wait queue using the header, linux/wait.h
+chapter 6, look at page 149
+
+load the module into the kernel:
+sudo insmod hello.ko
+
+Use this command to print the kernel log:
+dmesg
+dmesg | grep "hello"
+
+Look at the list of currently loaded modules:
+lsmod
+
+remove your new module:
+sudo rmmod hello
+
+Make sure that the module is not present anymore and also make sure that 
+"Unloading the hello kernel module." message appears in the log.
+
+lsmod
+dmesg
+
+You may have noticed that in hello.c, we called printk() instead of printf(). To see 
+the full list of functions that can be called from a kernel module:
+
+
+cat /proc/kallsyms | grep ' T '
+
+gcc -o userMode userMode.c
+for simple testing you can use the command line to write into the file.
+
+write text into in the command prompt:
+echo awesomeness > test2.txt
+echo "woohoo" > test2.txt
+
+write a file in the command prompt:
+cat test.txt > test2.txt
+
+chapter3 --- minor -- tells me the file number

@@ -26,10 +26,10 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
-
 #include <asm/uaccess.h>
-
 #include "sleepy.h"
+#include <linux/wait.h>
+
 
 MODULE_AUTHOR("Eugene A. Shatokhin, John Regehr");
 MODULE_LICENSE("GPL");
@@ -97,6 +97,7 @@ sleepy_read(struct file *filp, char __user *buf, size_t count,
   /* END YOUR CODE */
 	
   mutex_unlock(&dev->sleepy_mutex);
+  printk(KERN_INFO "Hi. I am reading it Paarth. Don't worry\n");
   return retval;
 }
                 
