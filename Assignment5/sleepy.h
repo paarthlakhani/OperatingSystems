@@ -19,6 +19,6 @@
 struct sleepy_dev {
   unsigned char *data;
   struct mutex sleepy_mutex; 
-  struct cdev cdev;
+  struct cdev cdev; // Find the structure. basic bookkeeping for character device drivers
 };
 #endif /* SLEEPY_H_1727_INCLUDED */

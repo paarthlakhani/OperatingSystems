@@ -1,8 +1,26 @@
 Questions:
 
+From the document. ask questions.
+
 Sleepy Character Driver:
 sleepy.c
 sleepy.h
 
-What do the above two files currently do when you do a make?
-How do you test them?
+Q.1. What do the above two files currently do when you do a make? creates 9 drivers when loaded into the kernel
+Q.2. How do you run the current given device driver ?
+write to the device driver to see the workflow
+
+Q.3. When the Linux kernel invokes functions in this driver, a number will be provided to indicate which device is being communicated with. 
+it indicates the device number
+
+It is up to you to keep these devices separated from each other in the code that you write.
+Yes, you have to keep different wait queues for each instance of the drivers.
+
+In sleepy.h
+Q. Does it create 10 drivers? 0 to 9
+Q. What is cdev? Not sure
+Q. Shouldn't the buffer_size be equal to block_size? Not sure
+Q. Each device will have the structure, sleepy_dev? Yes
+Q. wait_event_interruptible_timeout wake_up_interruptible is the 
+
+Test Scripts that write to these device driver. 
