@@ -22,8 +22,6 @@ dmesg
 
 You may have noticed that in hello.c, we called printk() instead of printf(). To see 
 the full list of functions that can be called from a kernel module:
-
-
 cat /proc/kallsyms | grep ' T '
 
 gcc -o userMode userMode.c
@@ -37,3 +35,6 @@ write a file in the command prompt:
 cat test.txt > test2.txt
 
 chapter3 --- minor -- tells me the file number
+
+ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
+%zu for size_t data type

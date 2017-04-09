@@ -14,11 +14,12 @@
  *  block_size - maximum number of bytes that can be read or written 
  *    in one call;
  *  sleepy_mutex - a mutex to protect the fields of this structure;
- *  cdev - ñharacter device structure.
+ *  cdev - ï¿½haracter device structure.
  */
 struct sleepy_dev {
   unsigned char *data;
   struct mutex sleepy_mutex; 
   struct cdev cdev; // Find the structure. basic bookkeeping for character device drivers
+  wait_queue_head_t sleepy_queue; // wait queue
 };
 #endif /* SLEEPY_H_1727_INCLUDED */

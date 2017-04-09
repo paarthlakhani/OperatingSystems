@@ -72,7 +72,7 @@ sleepy_open(struct inode *inode, struct file *filp)
       printk(KERN_WARNING "[target] open: internal error\n");
       return -ENODEV; /* No such device */
     }
-	
+	printk(KERN_INFO "Hi. I am opening the file\n");
   return 0;
 }
 
@@ -93,14 +93,16 @@ sleepy_read(struct file *filp, char __user *buf, size_t count,
     return -EINTR;
 	
   /* YOUR CODE HERE */
-
+  // printk(KERN_INFO "The count is: %zu", count);
+  unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
+  printk(KERN_INFO "Kernel: Number of bytes read are: %ld\n", bytes_read);
   /* END YOUR CODE */
 	
   mutex_unlock(&dev->sleepy_mutex);
-  printk(KERN_INFO "Hi. I am reading it Paarth. Don't worry\n");
+  // printk(KERN_INFO "Hi. I am reading from the driver. Don't worry\n");
   return retval;
 }
-                
+
 ssize_t 
 sleepy_write(struct file *filp, const char __user *buf, size_t count, 
 	     loff_t *f_pos)
@@ -108,14 +110,40 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
   struct sleepy_dev *dev = (struct sleepy_dev *)filp->private_data;
   ssize_t retval = 0;
 	
+  if(count!=4)
+  {
+    printk(KERN_INFO "I am returning back");
+    return -EINVAL;
+  }
+
   if (mutex_lock_killable(&dev->sleepy_mutex))
     return -EINTR;
-	
-  /* YOUR CODE HERE */
+  /*
+  struct sleepy_dev {
+  unsigned char *data;
+  struct mutex sleepy_mutex; 
+  struct cdev cdev; // Find the structure. basic bookkeeping for character device drivers
+  };
+*/
 
+  /* YOUR CODE HERE */
+   //void *pointer_space = kmalloc(count*sizeof(char *),GFP_KERNEL);
+   //printk(KERN_INFO "Kernel: Pointer is: %p", pointer_space);
+  //printk(KERN_INFO "Kernel: Count is: %zu", count);
+  dev->data = kmalloc(count,GFP_KERNEL);
+  //printk("Kernel: The address is: %p  The address ends \n", dev->data);
+  unsigned long bytes_written = copy_from_user((void *)dev->data, buf, count);
+  // do the checking here based on number of bytes returned.
+
+  // Sleep here.
+  wait_event_interruptible_timeout(dev->sleepy_queue, true, *dev->data);
+  
+  //printk(KERN_INFO "Kernel: Number of bytes written are: %ld\n", bytes_written);
+  //printk(KERN_INFO "Kernel: The data in the driver is: %d\n", *dev->data);
   /* END YOUR CODE */
 	
   mutex_unlock(&dev->sleepy_mutex);
+  printk(KERN_INFO "Kernel: Hi. I am writing into the driver. Don't worry\n");
   return retval;
 }
 
@@ -154,6 +182,7 @@ sleepy_construct_device(struct sleepy_dev *dev, int minor,
   mutex_init(&dev->sleepy_mutex);
     
   cdev_init(&dev->cdev, &sleepy_fops);
+  init_waitqueue_head(&dev->sleepy_queue); // Code added by me
   dev->cdev.owner = THIS_MODULE;
     
   err = cdev_add(&dev->cdev, devno, 1);
