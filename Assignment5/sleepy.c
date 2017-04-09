@@ -95,15 +95,11 @@ sleepy_read(struct file *filp, char __user *buf, size_t count,
     return -EINTR;
 	
   /* YOUR CODE HERE */
-  // printk(KERN_INFO "The count is: %zu", count);
-  unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
-  printk(KERN_INFO "Kernel: Number of bytes read are: %ld\n", bytes_read);
+  //unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
+  copy_to_user(buf, (void *)dev->data, count);
   /* END YOUR CODE */
-  //void wake_up_interruptible(wait_queue_head_t *queue);
-  //wake_up_interruptible(&dev->sleepy_queue);
-	
+  wake_up_interruptible(&dev->sleepy_queue);
   mutex_unlock(&dev->sleepy_mutex);
-  // printk(KERN_INFO "Hi. I am reading from the driver. Don't worry\n");
   return retval;
 }
 
@@ -116,39 +112,32 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
 	
   if(count!=4)
   {
-    return -EINVAL;
+    retval = -1;
+    int err = 0;
+    err = -EINVAL;
+    printk(KERN_INFO "Kernel: Error Code is: %d\n", err);
+    return err;
   }
 
   if (mutex_lock_killable(&dev->sleepy_mutex))
     return -EINTR;
 
-    unsigned long j, seconds_sleep;
-
-
   /* YOUR CODE HERE */
-   //void *pointer_space = kmalloc(count*sizeof(char *),GFP_KERNEL);
-   //printk(KERN_INFO "Kernel: Pointer is: %p", pointer_space);
-  //printk(KERN_INFO "Kernel: Count is: %zu", count);
+  unsigned long seconds_sleep;
   dev->data = kmalloc(count,GFP_KERNEL);
   //printk("Kernel: The address is: %p  The address ends \n", dev->data);
-  unsigned long bytes_written = copy_from_user((void *)dev->data, buf, count);
+  // unsigned long bytes_written = 
+  copy_from_user((void *)dev->data, buf, count);
   // do the checking here based on number of bytes returned
 
   // Sleep here.
   seconds_sleep = (*dev->data * HZ);
-  printk(KERN_INFO "Arguments seconds : %d", *dev->data);
-  printk(KERN_INFO "HZ is : %d", HZ);
-  printk(KERN_INFO "Jiffies is : %ld", jiffies);
-
-  //printk(KERN_INFO "Seconds to sleep: %lu", seconds_sleep);
-   // wait_event_interruptible_timeout(queue, condition, seconds_sleep);
-  
   //printk(KERN_INFO "Kernel: Number of bytes written are: %ld\n", bytes_written);
   //printk(KERN_INFO "Kernel: The data in the driver is: %d\n", *dev->data);
   /* END YOUR CODE */
   mutex_unlock(&dev->sleepy_mutex);
-  wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep);
-  printk(KERN_INFO "Kernel: Hi. I am writing into the driver. Don't worry\n");
+  unsigned long remaining_jiffies = wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep);
+  printk(KERN_INFO "Remaining Jiffies: %lu", remaining_jiffies);
   return retval;
 }
 
