@@ -29,6 +29,7 @@
 #include <linux/mutex.h>
 #include <asm/uaccess.h>
 #include <linux/sched.h>
+#include <linux/jiffies.h>
 #include "sleepy.h"
 
 
@@ -115,12 +116,13 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
 	
   if(count!=4)
   {
-    printk(KERN_INFO "I am returning back");
     return -EINVAL;
   }
 
   if (mutex_lock_killable(&dev->sleepy_mutex))
     return -EINTR;
+
+    unsigned long j, seconds_sleep;
 
 
   /* YOUR CODE HERE */
@@ -130,18 +132,22 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
   dev->data = kmalloc(count,GFP_KERNEL);
   //printk("Kernel: The address is: %p  The address ends \n", dev->data);
   unsigned long bytes_written = copy_from_user((void *)dev->data, buf, count);
-  // do the checking here based on number of bytes returned.
+  // do the checking here based on number of bytes returned
 
   // Sleep here.
+  seconds_sleep = (*dev->data * HZ);
+  printk(KERN_INFO "Arguments seconds : %d", *dev->data);
+  printk(KERN_INFO "HZ is : %d", HZ);
+  printk(KERN_INFO "Jiffies is : %ld", jiffies);
 
-  // wait_event_interruptible_timeout(dev->sleepy_queue, false, *dev->data);
-  // wait_event_interruptible_timeout(queue, condition, timeout)
+  //printk(KERN_INFO "Seconds to sleep: %lu", seconds_sleep);
+   // wait_event_interruptible_timeout(queue, condition, seconds_sleep);
   
   //printk(KERN_INFO "Kernel: Number of bytes written are: %ld\n", bytes_written);
   //printk(KERN_INFO "Kernel: The data in the driver is: %d\n", *dev->data);
   /* END YOUR CODE */
-	
   mutex_unlock(&dev->sleepy_mutex);
+  wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep);
   printk(KERN_INFO "Kernel: Hi. I am writing into the driver. Don't worry\n");
   return retval;
 }

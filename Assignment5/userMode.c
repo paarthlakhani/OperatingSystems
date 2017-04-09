@@ -26,8 +26,8 @@ int main(int argc, char* argv[])
 
     // Write to the sleepy driver
     //const void *buf = (const void*)("First line written. Okay now, let's move on to the  next thing"); // String to write into the driver
-    int *buf = (int *)malloc(sizeof(int));
-    *buf = 100;
+    short *buf = (short *)malloc(sizeof(short));
+    *buf = 5;
     // int buf = 2143;
     //long buf = 2143;
     //const void* buf = (const void*)sleep_time;
