@@ -22,13 +22,14 @@
 #include <linux/slab.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
+#include <linux/wait.h>
 #include <linux/err.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <asm/uaccess.h>
+#include <linux/sched.h>
 #include "sleepy.h"
-#include <linux/wait.h>
 
 
 MODULE_AUTHOR("Eugene A. Shatokhin, John Regehr");
@@ -97,6 +98,8 @@ sleepy_read(struct file *filp, char __user *buf, size_t count,
   unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
   printk(KERN_INFO "Kernel: Number of bytes read are: %ld\n", bytes_read);
   /* END YOUR CODE */
+  //void wake_up_interruptible(wait_queue_head_t *queue);
+  //wake_up_interruptible(&dev->sleepy_queue);
 	
   mutex_unlock(&dev->sleepy_mutex);
   // printk(KERN_INFO "Hi. I am reading from the driver. Don't worry\n");
@@ -118,13 +121,7 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
 
   if (mutex_lock_killable(&dev->sleepy_mutex))
     return -EINTR;
-  /*
-  struct sleepy_dev {
-  unsigned char *data;
-  struct mutex sleepy_mutex; 
-  struct cdev cdev; // Find the structure. basic bookkeeping for character device drivers
-  };
-*/
+
 
   /* YOUR CODE HERE */
    //void *pointer_space = kmalloc(count*sizeof(char *),GFP_KERNEL);
@@ -136,7 +133,9 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
   // do the checking here based on number of bytes returned.
 
   // Sleep here.
-  wait_event_interruptible_timeout(dev->sleepy_queue, true, *dev->data);
+
+  // wait_event_interruptible_timeout(dev->sleepy_queue, false, *dev->data);
+  // wait_event_interruptible_timeout(queue, condition, timeout)
   
   //printk(KERN_INFO "Kernel: Number of bytes written are: %ld\n", bytes_written);
   //printk(KERN_INFO "Kernel: The data in the driver is: %d\n", *dev->data);
