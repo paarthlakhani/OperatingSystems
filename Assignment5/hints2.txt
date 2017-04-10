@@ -1,0 +1,64 @@
+You may have noticed that in hello.c, we called printk() instead of printf(). To see 
+the full list of functions that can be called from a kernel module:
+cat /proc/kallsyms | grep ' T '
+
+gcc -o userMode userMode.c
+gcc -o userMode_1 userMode_1.c
+gcc -o userMode_2 userMode_2.c
+for simple testing you can use the command line to write into the file.
+
+write text into in the command prompt:
+echo awesomeness > test2.txt
+echo "woohoo" > test2.txt
+
+write a file in the command prompt:
+cat test.txt > test2.txt
+
+chapter3 --- minor -- tells me the file number
+
+ssize_t write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
+%zu for size_t data type
+
+printing statements:
+printk(KERN_INFO "Kernel: Number of bytes read are: %ld\n", bytes_read);
+printk(KERN_INFO "The count is: %zu", count);
+printk(KERN_INFO "Jiffies is : %ld", jiffies);
+printk(KERN_INFO "HZ is : %d", HZ);
+printk(KERN_INFO "Arguments seconds : %d", *dev->data);
+printk(KERN_INFO "Seconds to sleep: %lu", seconds_sleep);
+printk(KERN_INFO "Kernel: Hi. I am writing into the driver. Don't worry\n");
+
+printing hints
+pointer address -> %p
+unsigned long -> %lu
+long -> %ld
+size_t -> %zu
+int -> %d
+
+allocating malloc:
+void *pointer_space = kmalloc(count*sizeof(char *),GFP_KERNEL);
+
+syscall method signatures:
+ssize_t read(int fd, void *buf, size_t count);
+wait_event_interruptible_timeout(queue, condition, seconds_sleep);
+size_t strlen(const char *str);
+size_t sizeof(const char *str); // Not sure ( int *buf = (int *)malloc(sizeof(int)); )
+
+malloc is included in stdlib.h
+
+common kernel loading commands:
+sudo rmmod shady.ko
+sudo insmod shady.ko
+sudo ./userMode
+lsmod --> list of modules
+
+Alternative ways to define an array:
+void *read_buf = malloc(length);
+char read_buf[length];
+const void *buf = (const void*)("First line written. Okay now, let's move on to the  
+next thing");
+
+open files:
+fd = open("/dev/sleepy0", O_WRONLY);   
+fd = open("/dev/sleepy0", O_RDONLY);
+fd = open("/dev/sleepy0", O_RDWR);
