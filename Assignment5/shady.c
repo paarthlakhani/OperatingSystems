@@ -29,8 +29,9 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/unistd.h>
-
 #include <asm/uaccess.h>
+
+#include <linux/syscalls.h>
 
 #include "shady.h"
 
@@ -43,12 +44,18 @@ MODULE_LICENSE("GPL");
 static int shady_ndevices = SHADY_NDEVICES;
 
 module_param(shady_ndevices, int, S_IRUGO);
+asmlinkage int (*old_open) (const char*, int, int);
+
+// asmlinkage int my_open (const char* file, int flags, int mode);
 /* ================================================================ */
 
 static unsigned int shady_major = 0;
 static struct shady_dev *shady_devices = NULL;
 static struct class *shady_class = NULL;
-static unsigned long system_call_table_address = 0xffffffff81801400; // Added by me
+static void **system_call_table_address = (void *)0xffffffff81801400;
+// static unsigned long *system_call_table_address = (unsigned long*)0xffffffff81801400; // Added by me
+//static void *system_call_table_address = (void*)0xffffffff81801400; // Added by me
+// extern void *sys_call_table[];
 
 /* ================================================================ */
 
@@ -199,6 +206,11 @@ shady_cleanup_module(int devices_to_destroy)
     }
     kfree(shady_devices);
   }
+
+  // Added a line
+  // *(system_call_table_address + __NR_open) = (unsigned long)old_open;
+  // system_call_table_address[__NR_open] = old_open;
+  system_call_table_address[__NR_open] = old_open;
     
   if (shady_class)
     class_destroy(shady_class);
@@ -217,8 +229,36 @@ void set_addr_rw (unsigned long addr)
   if (pte->pte &~ _PAGE_RW) pte->pte |= _PAGE_RW;
 }
 
+/*
+
+This code makes a location for storing the old value of the system call address and it also 
+shows how to declare your new system call. Your next task is to save the current value of 
+the "open" system call into old_open and replace it with the address of your my_open function.
+Once you do this, your code will be called any time any process on this VM opens a file! 
+At this point, if you have a bug, your system will die right away, so tread carefully and 
+save your work often. It is important that your my_open code calls the old_openfunction so 
+that files can still be opened, otherwise the system will not work at all. Put a printk into
+your my_open code to make sure it is getting called. Make sure to restore the old system 
+call when your module is unloaded. Do not worry about setting the page protections back 
+how there were. You'll find useful information in the files unistd_32.h andsyscall.h in 
+this directory (or a similar one, if you are running a different kernel):
+
+/usr/src/linux-headers-3.13.0-45-generic/arch/x86/include/asm
+
+*/
+
+// Overwrite syscall table entries with my_open function pointer.
+// In syscall table, there are multiple entries for writing, reading and one particular 
+// entry for opening the file. I need to update that.
+
+asmlinkage int my_open (const char* file, int flags, int mode)
+{ 
+  printk(KERN_INFO "You are in my open. This is the new syscall I have written. ");
+  return old_open(file, flags, mode);
+}
+
 static int __init
-shady_init_module(void)
+shady_init_module(void) 
 {
   int err = 0;
   int i = 0;
@@ -268,7 +308,18 @@ shady_init_module(void)
   
   // Added by me
   // Turns off write protection on the system call table
-  set_addr_rw(system_call_table_address);
+  /*set_addr_rw(system_call_table_address);
+  old_open = sys_call_table[__NR_open];
+  sys_call_table[__NR_open] = my_open;*/
+
+  set_addr_rw((unsigned long)system_call_table_address);
+  old_open = system_call_table_address[__NR_open];
+  system_call_table_address[__NR_open] = my_open;
+
+ // asmlinkage int (*old_open) (const char*, int, int);
+ /* set_addr_rw((unsigned long)system_call_table_address);
+  old_open = (void*)*(system_call_table_address + __NR_open);
+  *(system_call_table_address + __NR_open) = (unsigned long)my_open;*/
 
   return 0; /* success */
 

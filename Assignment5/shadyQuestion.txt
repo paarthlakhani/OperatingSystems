@@ -19,16 +19,19 @@ asmlinkage int (*old_open) (const char*, int, int);
 asmlinkage int my_open (const char* file, int flags, int mode)
 {
    /* YOUR CODE HERE */
+   // Overwrite syscall table entries with my_open function pointer.
+   // syscall table, there are multiple entries for writing, reading and one particular 
+   // entry for opening the file. I need to update that.
 }
 This code makes a location for storing the old value of the system call address and it also shows how to declare your new system call. Your next task is to save the current value of the "open" system call into old_open and replace it with the address of your my_open function. Once you do this, your code will be called any time any process on this VM opens a file! At this point, if you have a bug, your system will die right away, so tread carefully and save your work often. It is important that your my_open code calls the old_openfunction so that files can still be opened, otherwise the system will not work at all. Put a printk into your my_open code to make sure it is getting called. Make sure to restore the old system call when your module is unloaded. Do not worry about setting the page protections back how there were. You'll find useful information in the files unistd_32.h andsyscall.h in this directory (or a similar one, if you are running a different kernel):
 
-/usr/src/linux-headers-3.13.0-45-generic/arch/x86/include/asm
+/usr/src/linux-headers-3.13.0-116-generic/arch/x86/include/asm
 
 You now have one final job. We don't want to spy on everyone, but rather on a specific user. Create a new user on your system called "mark" and look in /etc/passwd to figure out what mark's userid is. Modify your system call interceptor so that it does nothing (other than call the actual code to open a file) unless it is mark who is opening the file. If mark opens a file, you should still open the file as normal (so that mark won't notice anything wrong) but also use printk to print a message such as:
 
 mark is about to open '/etc/ld.so.cache'
 You must put mark's UID into a global variable in shady.c called marks_uid so that we can change this UID for grading purposes. You can find useful functions for finding the current UID in this file:
 
-/usr/src/linux-headers-3.13.0-45-generic/include/linux/cred.h
+/usr/src/linux-headers-3.13.0-116-generic/include/linux/cred.h
 
 EXTRA CREDIT: Hide your shady device driver so that lsmod and /proc/modules do not list it when it is loaded.

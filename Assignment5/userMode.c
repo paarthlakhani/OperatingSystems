@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     }
     printf("File fd0 has been loaded: %d\n" , fd0);
 
-    short *buf = (short *)malloc(sizeof(short));
-    *buf = 5;
+    int *buf = (int *)malloc(sizeof(int));
+    *buf = 20;
     size_t length = sizeof(*buf);
     ssize_t bytes_written = write(fd0, buf, length);
     printf("User Code: Bytes written are: %zu\n", bytes_written);

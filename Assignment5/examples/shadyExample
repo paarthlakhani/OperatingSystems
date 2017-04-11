@@ -1,0 +1,14 @@
+extern void *sys_call_table[];
+original_sys_open = sys_call_table[__NR_open];
+sys_call_table[__NR_open] = new_sys_open;
+
+
+asmlinkage int new_sys_open(const char *filename, int flags, int mode)
+{
+	printk(KERN_ALERT "CALLING SYS_OPEN");
+
+	// call the original_sys_open
+	ret = (*original_sys_open)(filename, flags, mode);
+
+	return ret;
+}
