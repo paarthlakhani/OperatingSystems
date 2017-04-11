@@ -8,7 +8,7 @@
 int main(int argc, char* argv[])
 {
     int fd1;
-    fd1 = open("/dev/sleepy1", O_RDWR);
+    fd1 = open("/dev/sleepy0", O_RDWR);
 
     if(fd1 < 0)
     {

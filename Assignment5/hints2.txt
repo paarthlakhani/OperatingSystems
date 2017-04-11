@@ -74,6 +74,7 @@ x86_64 x86_64 x86_64 GNU/Linux
 sudo cat /boot/System.map-3.13.0-116-generic | grep "call_table"
 
 last part:
+Make a user
 sudo useradd mark
 id -u username
 
