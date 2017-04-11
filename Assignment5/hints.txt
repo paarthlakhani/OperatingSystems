@@ -95,3 +95,6 @@ int g = 3;
 void *pointer_address = &g;
 printf("Address is: %p\n", pointer_address);
 printf("Address is: %zu\n", sizeof(pointer_address));
+
+// Copy to user
+unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
