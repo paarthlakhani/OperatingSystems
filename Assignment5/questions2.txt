@@ -1,0 +1,7 @@
+Is the system call table name: sys_call_table
+and the address is: ffffffff81801400 R sys_call_table
+
+
+1. how to turn off write protection on the system call table? 
+2. Do we have to write the code in the my_open() function and what abou the
+previous function declaration?

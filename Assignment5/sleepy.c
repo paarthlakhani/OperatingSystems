@@ -47,6 +47,7 @@ module_param(sleepy_ndevices, int, S_IRUGO);
 static unsigned int sleepy_major = 0;
 static struct sleepy_dev *sleepy_devices = NULL;
 static struct class *sleepy_class = NULL;
+static int flag = 0; // by me
 /* ================================================================ */
 
 int 
@@ -96,9 +97,14 @@ sleepy_read(struct file *filp, char __user *buf, size_t count,
 	
   /* YOUR CODE HERE */
   //unsigned long bytes_read = copy_to_user(buf, (void *)dev->data, count);
-  copy_to_user(buf, (void *)dev->data, count);
+  // Do I need this?
+  // copy_to_user(buf, (void *)dev->data, count);
   /* END YOUR CODE */
+  flag = 1;
   wake_up_interruptible(&dev->sleepy_queue);
+  //copy_to_user(buf, (void *)dev->data, count);
+  // copy to user
+
   mutex_unlock(&dev->sleepy_mutex);
   return retval;
 }
@@ -119,25 +125,43 @@ sleepy_write(struct file *filp, const char __user *buf, size_t count,
     return err;
   }
 
+  flag = 0;
+
   if (mutex_lock_killable(&dev->sleepy_mutex))
     return -EINTR;
-
+  
+  
   /* YOUR CODE HERE */
   unsigned long seconds_sleep;
+  //unsigned long j;
+  //j = jiffies;
   dev->data = kmalloc(count,GFP_KERNEL);
-  //printk("Kernel: The address is: %p  The address ends \n", dev->data);
+
   // unsigned long bytes_written = 
   copy_from_user((void *)dev->data, buf, count);
   // do the checking here based on number of bytes returned
 
   // Sleep here.
-  seconds_sleep = (*dev->data * HZ);
-  //printk(KERN_INFO "Kernel: Number of bytes written are: %ld\n", bytes_written);
-  //printk(KERN_INFO "Kernel: The data in the driver is: %d\n", *dev->data);
+  seconds_sleep = ((unsigned long)*dev->data * HZ);
+  printk(KERN_INFO "Seconds is: %lu" , seconds_sleep);
+
   /* END YOUR CODE */
+  
+  // retval = wait_event_interruptible_timeout(dev->sleepy_queue, dev->waiting_done, seconds_sleep);
+  //*(dev->data) = (char *)wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep);
+
   mutex_unlock(&dev->sleepy_mutex);
-  unsigned long remaining_jiffies = wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep);
-  printk(KERN_INFO "Remaining Jiffies: %lu", remaining_jiffies);
+
+  unsigned long remaining_jiffies =  wait_event_interruptible_timeout(dev->sleepy_queue, flag, seconds_sleep);
+  retval = remaining_jiffies/HZ;
+  //*dev->data = retval;
+  // printk(KERN_INFO "Remaining Jiffies: %lu" , remaining_jiffies/HZ);
+  //printk(KERN_INFO "Remaining Jiffies: %lu" , wait_event_interruptible_timeout(dev->sleepy_queue, false, seconds_sleep));
+  
+  mutex_lock(&dev->sleepy_mutex);
+  flag = 1; // Show him the code.
+  mutex_unlock(&dev->sleepy_mutex);
+
   return retval;
 }
 
@@ -211,7 +235,7 @@ sleepy_destroy_device(struct sleepy_dev *dev, int minor,
   cdev_del(&dev->cdev);
   kfree(dev->data);
   return;
-}
+} 
 
 /* ================================================================ */
 static void

@@ -38,3 +38,50 @@ How would I do that?
 
 
 Q.4. I am confused as with the drivers. Do I need to write the files in the drivers
+
+Questions to ask for sure?
+
+Question 1:
+A follow-up question on this part. Specifically, this statement:
+ - If a process writes a 4-byte integer to a sleepy device, it is put to sleep for the 
+number of seconds stored in the integer (if the value is negative, no sleep is performed).
+
+- In case, of a negative number written, no sleep is performed. 
+What should the return value be? Should it be 0 or -EINVAL?
+
+- I am just reading an integer and parsing the argument as integer. First checking if the 
+size of the variable is 4 bytes, then going forward, else not going forward.
+
+Question 2:
+
+In case of my kernel code, I get the value of -EINVAL as -22 and printing that value in 
+kernel code:
+Output: Kernel: Error Code is: -22
+
+However, when I print the number of bytes written from the user code, I get as:
+Output: User Code: Bytes written are: 18446744073709551615
+
+But when I do:
+printf("Error Code is: %s \n", strerror(errno));
+I get: Output: Error Code is: Invalid argument
+
+How should change the value of the return value to reflect an error has occured.
+
+Question 3:
+Shouldn't we write the 4 byte integer into the dev->data field  and then sleep that process 
+for those many seconds so that another process who reads from the device driver, can access 
+the value stored into the device driver and thus calculate the number of seconds yet remaining?
+Show how you have done it, ask whether it is right or now. wait_event_interruptible_timeout() 
+discussion forum.
+
+Question 4:
+When the write function is called, one instance of the struct sleepy_dev is created for every
+instance, or is it just one struct for every device driver meaning, are there only 10
+structs created and any time the process is called, it is put into the wait queue.
+After I call wake_up_interruptible, the processes in the queue are called and the time remaining
+in the processes is returned. Where is it returned?
+
+Question 5:
+Do I need use copy_to_user()?
+
+

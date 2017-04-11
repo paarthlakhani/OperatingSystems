@@ -27,6 +27,7 @@ cat /proc/kallsyms | grep ' T '
 gcc -o userMode userMode.c
 gcc -o userMode_1 userMode_1.c
 gcc -o userMode_2 userMode_2.c
+gcc -o userMode_3 userMode_3.c
 for simple testing you can use the command line to write into the file.
 
 write text into in the command prompt:
@@ -49,6 +50,7 @@ printk(KERN_INFO "HZ is : %d", HZ);
 printk(KERN_INFO "Arguments seconds : %d", *dev->data);
 printk(KERN_INFO "Seconds to sleep: %lu", seconds_sleep);
 printk(KERN_INFO "Kernel: Hi. I am writing into the driver. Don't worry\n");
+printk("Kernel: The address is: %p  The address ends \n", dev->data);
 
 printing hints
 pointer address -> %p
@@ -56,6 +58,7 @@ unsigned long -> %lu
 long -> %ld
 size_t -> %zu
 int -> %d
+hex -> %x
 
 allocating malloc:
 void *pointer_space = kmalloc(count*sizeof(char *),GFP_KERNEL);
@@ -73,7 +76,6 @@ sudo rmmod sleepy.ko
 sudo insmod sleepy.ko
 sudo ./userMode
 
-
 Alternative ways to define an array:
 void *read_buf = malloc(length);
 char read_buf[length];
@@ -85,6 +87,11 @@ fd = open("/dev/sleepy0", O_WRONLY);
 fd = open("/dev/sleepy0", O_RDONLY);
 fd = open("/dev/sleepy0", O_RDWR);
 
-
 write one process for 30 seconds, another process reads from the driver and it returns 
 the time remaining from the driver.
+
+// Address printing out
+int g = 3;
+void *pointer_address = &g;
+printf("Address is: %p\n", pointer_address);
+printf("Address is: %zu\n", sizeof(pointer_address));

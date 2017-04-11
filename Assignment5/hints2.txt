@@ -62,3 +62,13 @@ open files:
 fd = open("/dev/sleepy0", O_WRONLY);   
 fd = open("/dev/sleepy0", O_RDONLY);
 fd = open("/dev/sleepy0", O_RDWR);
+
+
+uname -a -> tells which version kernel I am using
+kernel version I am using -> 
+
+Linux ubuntu 3.13.0-116-generic #163-Ubuntu SMP Fri Mar 31 14:13:22 UTC 2017 
+x86_64 x86_64 x86_64 GNU/Linux
+
+/boot/System.map-116 -> location of the system call table
+sudo cat /boot/System.map-3.13.0-116-generic | grep "call_table"

@@ -10,21 +10,19 @@
 
 int main(int argc, char* argv[])
 {
-    int fd1;
-    fd1 = open("/dev/sleepy0", O_RDWR);
+    int fd2;
+    fd2 = open("/dev/sleepy0", O_RDONLY);
 
-    if(fd1 < 0)
+    if(fd2 < 0)
     {
-        printf("Problem loading the fd1\n");
-        printf("The error in fd1 is: %d" , fd1);
+        printf("Problem loading the fd2\n");
+        printf("The error in fd2 is: %d" , fd2);
         exit(-1);
     }
-    printf("File fd1 has been loaded: %d\n" , fd1);
+    printf("File fd2 has been loaded: %d\n" , fd2);
 
     int length = sizeof(int);
     void *read_buf = malloc(length);
-    ssize_t bytes_read = read(fd1, read_buf, length);
-    printf("User Code: Bytes read are: %zu\n", bytes_read);
-    printf("User Code: String is: %d\n", *(int *)read_buf);
-    close(fd1);
+    ssize_t bytes_read = read(fd2, read_buf, length);
+    close(fd2);
 }

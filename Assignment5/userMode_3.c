@@ -3,15 +3,12 @@
 #include<fcntl.h>
 #include<stdlib.h>
 #include<string.h>
-
-// int open(const char *path, int oflags);
-// ssize_t read(int fildes, void *buf, size_t nbytes);
-
+#include <errno.h>
 
 int main(int argc, char* argv[])
 {
     int fd1;
-    fd1 = open("/dev/sleepy0", O_RDWR);
+    fd1 = open("/dev/sleepy1", O_RDWR);
 
     if(fd1 < 0)
     {
@@ -26,7 +23,9 @@ int main(int argc, char* argv[])
     size_t length = sizeof(*buf);
     ssize_t bytes_written = write(fd1, buf, length);
     printf("User Code: Bytes written are: %zu\n", bytes_written);
-    
+    printf("Error Code is: %s \n", strerror(errno));
+    printf("Error Code is: %d \n", errno);
+
     /*void *read_buf = malloc(length);
     ssize_t bytes_read = read(fd1, read_buf, length);
     printf("User Code: Bytes read are: %zu\n", bytes_read);

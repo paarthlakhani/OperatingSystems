@@ -1,0 +1,34 @@
+A Shady Character Driver
+The provided files shady.c and shady.h provide another skeleton character device driver. This one is going to be a little bit evil. Its purpose is to eavesdrop on processes belonging to another user. You are being given this assignment not because I want you to become proficient at writing kernel-mode rootkits (Links to an external site.) but rather because doing this will let you write some interesting code and also because it illustrates just how much trust we must have in anyone who writes code that we load into our OS kernels!
+
+The first job of the shady module is to hack the system call table so that any call to the open() system call is diverted to the shady module. This used to be really easy, but the Linux kernel developers have wised up and made it so that the location of the system call table is no longer provided to kernel modules. Additionally, they have used the virtual memory system to mark the system call table as read-only. You will have to bypass both of these protections.
+
+You must find the location of the system call table on your machine. This is listed on a file in the /boot directory called System.map-xxxx where the xxxx is a kernel version. Make sure to use the system map for the kernel you are actually running! The uname -a command will tell you this. Now that you know the address where the system call table lives, hard-code it in a global variable called system_call_table_address in shady.c. You have to do this so we can find it and change it to something different, if necessary, while grading your code.
+
+Now, modify shady's __init function so that it turns off write protection on the system call table. You may use this handy function which goes ahead and directly modifies the appropriate page table entry:
+
+void set_addr_rw (unsigned long addr) {
+  unsigned int level;
+  pte_t *pte = lookup_address(addr, &level);
+  if (pte->pte &~ _PAGE_RW) pte->pte |= _PAGE_RW;
+}
+Now you are ready to intercept a system call. First, add this to your shady module:
+
+asmlinkage int (*old_open) (const char*, int, int);
+
+asmlinkage int my_open (const char* file, int flags, int mode)
+{
+   /* YOUR CODE HERE */
+}
+This code makes a location for storing the old value of the system call address and it also shows how to declare your new system call. Your next task is to save the current value of the "open" system call into old_open and replace it with the address of your my_open function. Once you do this, your code will be called any time any process on this VM opens a file! At this point, if you have a bug, your system will die right away, so tread carefully and save your work often. It is important that your my_open code calls the old_openfunction so that files can still be opened, otherwise the system will not work at all. Put a printk into your my_open code to make sure it is getting called. Make sure to restore the old system call when your module is unloaded. Do not worry about setting the page protections back how there were. You'll find useful information in the files unistd_32.h andsyscall.h in this directory (or a similar one, if you are running a different kernel):
+
+/usr/src/linux-headers-3.13.0-45-generic/arch/x86/include/asm
+
+You now have one final job. We don't want to spy on everyone, but rather on a specific user. Create a new user on your system called "mark" and look in /etc/passwd to figure out what mark's userid is. Modify your system call interceptor so that it does nothing (other than call the actual code to open a file) unless it is mark who is opening the file. If mark opens a file, you should still open the file as normal (so that mark won't notice anything wrong) but also use printk to print a message such as:
+
+mark is about to open '/etc/ld.so.cache'
+You must put mark's UID into a global variable in shady.c called marks_uid so that we can change this UID for grading purposes. You can find useful functions for finding the current UID in this file:
+
+/usr/src/linux-headers-3.13.0-45-generic/include/linux/cred.h
+
+EXTRA CREDIT: Hide your shady device driver so that lsmod and /proc/modules do not list it when it is loaded.
