@@ -53,6 +53,8 @@ static unsigned int shady_major = 0;
 static struct shady_dev *shady_devices = NULL;
 static struct class *shady_class = NULL;
 static void **system_call_table_address = (void *)0xffffffff81801400;
+
+uid_t marks_uid = 1002;
 // static unsigned long *system_call_table_address = (unsigned long*)0xffffffff81801400; // Added by me
 //static void *system_call_table_address = (void*)0xffffffff81801400; // Added by me
 // extern void *sys_call_table[];
@@ -253,7 +255,10 @@ this directory (or a similar one, if you are running a different kernel):
 
 asmlinkage int my_open (const char* file, int flags, int mode)
 { 
-  printk(KERN_INFO "You are in my open. This is the new syscall I have written. ");
+  if(current_uid().val == marks_uid)
+  {
+    printk(KERN_INFO "mark is about to open '/etc/ld.so.cache'\n");
+  }
   return old_open(file, flags, mode);
 }
 

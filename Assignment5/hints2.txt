@@ -72,3 +72,18 @@ x86_64 x86_64 x86_64 GNU/Linux
 
 /boot/System.map-116 -> location of the system call table
 sudo cat /boot/System.map-3.13.0-116-generic | grep "call_table"
+
+last part:
+sudo useradd mark
+id -u username
+
+if(current_uid().val == marks_uid)
+{
+    printk(KERN_INFO "mark is about to open '/etc/ld.so.cache'\n");
+}
+
+Switch to a user:
+sudo su mark
+
+change password of a user:
+passwd user
